@@ -1,0 +1,42 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net6.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <PlatformTarget>x64</PlatformTarget>
+    <ModLoaderPath>..\..</ModLoaderPath>
+    <ModVersion>1.0.1</ModVersion>
+    <GameDllPath>$(ModLoaderPath)\SingleFileExtractor</GameDllPath>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Reference Include="CobaltCore">
+      <HintPath>References\CobaltCore.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="CobaltCoreModding.Definitions">
+      <HintPath>References\CobaltCoreModding.Definitions.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Shockah.CobaltCoreModBuildConfig" Version="1.0.0" />
+    <PackageReference Include="Shrike" Version="2.1.0" />
+    <PackageReference Include="Shrike.Harmony" Version="2.0.2" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="LICENSE.txt">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="README.md">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="Sprites/**/*">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
+</Project>
