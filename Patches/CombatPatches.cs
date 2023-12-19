@@ -26,7 +26,6 @@ internal static class CombatPatches
 	}
 
     private static IEnumerable<CodeInstruction> Combat_DrawCards_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator il, MethodBase originalMethod) {
-        
         try
 		{
             Label newLabel = il.DefineLabel();
@@ -52,49 +51,9 @@ internal static class CombatPatches
 			Instance.Logger!.LogError("Could not patch method {Method} - {Mod} probably won't work.\nReason: {Exception}", originalMethod, Instance.Name, ex);
 			return instructions;
 		}
-
-        
-        // using IEnumerator<CodeInstruction> iter = iseq.GetEnumerator();
-        // while (iter.MoveNext()) {
-        //     yield return iter.Current;
-        //     if (iter.Current.opcode != OpCodes.Ldarg_1) continue;
-
-        //     if (!iter.MoveNext()) break;
-        //     yield return iter.Current;
-
-        //     if(iter.Current.opcode != OpCodes.Ldfld || ((FieldInfo) iter.Current.operand).Name != "deck") continue;
-
-        //     if (!iter.MoveNext()) break;
-        //     yield return iter.Current;
-
-        //     if(iter.Current.opcode != OpCodes.Callvirt || ((MethodInfo)iter.Current.operand).Name != "get_Count") continue;
-
-        //     if (!iter.MoveNext()) break;
-        //     yield return iter.Current;
-
-        //     if(iter.Current.opcode != OpCodes.Brtrue_S) continue;
-
-        //     Label newLabel = il.DefineLabel();
-
-        //     yield return new CodeInstruction(OpCodes.Ldarg_1);
-        //     yield return new CodeInstruction(OpCodes.Ldarg_0);
-        //     yield return new CodeInstruction(OpCodes.Call, typeof(Manifest).GetMethod("CanShuffle", BindingFlags.NonPublic | BindingFlags.Static));
-        //     yield return new CodeInstruction(OpCodes.Brtrue, newLabel);
-        //     yield return new CodeInstruction(OpCodes.Ret);
-
-        //     if (!iter.MoveNext()) break;
-        //     yield return iter.Current;
-
-        //     iter.Current.labels.Add(newLabel);
-        //     break;
-        // }
-        // while (iter.MoveNext()) {
-        //     yield return iter.Current;
-        // }
 	}
 
     private static bool CanShuffle(State s, Combat c) {
-        Instance.Logger.LogInformation("mmmm idk");
         foreach (Artifact item in s.EnumerateAllArtifacts())
         {
             if (item is HARDMODE hardmode && hardmode.difficulty >= Manifest.Difficulty1 && c.energy <= 0) {

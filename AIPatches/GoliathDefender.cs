@@ -1,6 +1,7 @@
 using CobaltCoreModding.Definitions;
 using HarmonyLib;
 using System.Reflection;
+using Microsoft.Extensions.Logging;
 using FSPRO;
 
 namespace TheJazMaster.MoreDifficulties.AIPatches;
@@ -10,10 +11,11 @@ Avoids mines
 */
 [HarmonyPatch]
 public static class GoliathDefenderPatch {
+	private static Manifest Instance => Manifest.Instance;
 
-	public static List<CardAction> MoveToAimAtAvoidingMines(State s, Ship movingShip, Ship targetShip, int alignPartLocalX, int mineAvoidPartLocalX)
+	public static List<CardAction> MoveToAimAtAvoidingMines(State s, Ship movingShip, Ship targetShip, int alignPartLocalX, int mineAvoidPartLocalX, int? backupAlignPartLocalX = null)
 	{
-		Ship targetShip2 = targetShip;
+		bool avoidedMine = false;
 		Route route = s.route;
 		Combat? c = route as Combat;
 		if (c == null)
@@ -28,11 +30,11 @@ public static class GoliathDefenderPatch {
 			return new List<CardAction>();
 		}
 		StuffBase? value;
-		var list = (from pair in targetShip2.parts.Select((Part part, int x) => new
+		var list = (from pair in targetShip.parts.Select((Part part, int x) => new
 			{
 				part = part,
 				x = x,
-				drone = (c.stuff.TryGetValue(x + targetShip2.x, out value) ? value : null)
+				drone = (c.stuff.TryGetValue(x + targetShip.x, out value) ? value : null)
 			})
 			where pair.part.type != PType.empty
 			select pair).ToList();
@@ -60,11 +62,21 @@ public static class GoliathDefenderPatch {
 		var anon = list[0];
 		foreach (var data in list) {
 			anon = data;
-			if (!c.stuff.TryGetValue(data.x + (mineAvoidPartLocalX - alignPartLocalX), out value) || !(value is SpaceMine)) {
+			if (!c.stuff.TryGetValue(data.x + targetShip.x + (mineAvoidPartLocalX - alignPartLocalX), out value) || !(value is SpaceMine)) {
+				avoidedMine = true;
 				break;
 			}
 		}
-		int num = targetShip2.x + anon.x - (movingShip.x + alignPartLocalX);
+		if (!avoidedMine && backupAlignPartLocalX.HasValue) {
+			foreach (var data in list) {
+				anon = data;
+				if (!c.stuff.TryGetValue(data.x + targetShip.x + (mineAvoidPartLocalX - backupAlignPartLocalX.Value), out value) || !(value is SpaceMine)) {
+					avoidedMine = true;
+					break;
+				}
+			}
+		}
+		int num = targetShip.x + anon.x - (movingShip.x + alignPartLocalX);
 		return AIHelpers.Move(num);
 	}
 
@@ -79,7 +91,7 @@ public static class GoliathDefenderPatch {
 		}
 		__result = AIUtils.MoveSet(__instance.aiCounter++, () => new EnemyDecision
 		{
-			actions = MoveToAimAtAvoidingMines(s, ownShip, s.ship, 2, 4),
+			actions = MoveToAimAtAvoidingMines(s, ownShip, s.ship, 3, 4, 1),
 			intents = new List<Intent>
 			{
 				new IntentAttack
@@ -100,7 +112,7 @@ public static class GoliathDefenderPatch {
 			}
 		}, () => new EnemyDecision
 		{
-			actions = MoveToAimAtAvoidingMines(s, ownShip, s.ship, 3, 1),
+			actions = MoveToAimAtAvoidingMines(s, ownShip, s.ship, 1, 3),
 			intents = new List<Intent>
 			{
 				new IntentAttack
