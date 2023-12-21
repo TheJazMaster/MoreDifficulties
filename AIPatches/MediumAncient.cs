@@ -37,8 +37,8 @@ public static class MediumAncientPatch {
 	}
 
 	[HarmonyPatch(typeof(AAttack), nameof(AAttack.Begin))]
-	[HarmonyPostfix]
-	private static void Begin_Postfix(AAttack __instance, G g, State s, Combat c) {
+	[HarmonyPrefix]
+	private static void Begin_Prefix(AAttack __instance, G g, State s, Combat c) {
 		Ship ship = (__instance.targetPlayer ? s.ship : c.otherShip);
 		var targetPlayer = __instance.targetPlayer;
 
