@@ -19,8 +19,8 @@ internal static class RunSummaryRoutePatches
 	{
 		harmony.TryPatch(
 			logger: Instance.Logger!,
-			original: typeof(RunSummaryRoute).GetMethod("Render"),
-			transpiler: new HarmonyMethod(typeof(RunSummaryRoutePatches).GetMethod("RunSummaryRoute_Render_Transpiler", BindingFlags.Static | BindingFlags.NonPublic))
+			original: typeof(RunSummaryRoute).GetMethod("Render", AccessTools.all),
+			transpiler: new HarmonyMethod(typeof(RunSummaryRoutePatches).GetMethod("RunSummaryRoute_Render_Transpiler", AccessTools.all))
 		);
 	}
 

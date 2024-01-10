@@ -12,8 +12,8 @@ internal static class RunConfigPatches
 	{
 		harmony.TryPatch(
 			logger: Instance.Logger!,
-			original: typeof(RunConfig).GetMethod("SetDifficulty"),
-			postfix: new HarmonyMethod(typeof(RunConfigPatches).GetMethod("RunConfig_SetDifficulty_Postfix", BindingFlags.Static | BindingFlags.NonPublic))
+			original: typeof(RunConfig).GetMethod("SetDifficulty", AccessTools.all),
+			postfix: new HarmonyMethod(typeof(RunConfigPatches).GetMethod("RunConfig_SetDifficulty_Postfix", AccessTools.all))
 		);
 	}
 

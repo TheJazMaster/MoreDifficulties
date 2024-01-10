@@ -23,28 +23,28 @@ internal static class NewRunOptionsPatches
 	{
 		harmony.TryPatch(
 			logger: Instance.Logger!,
-			original: typeof(NewRunOptions).GetMethod("EnsureRunConfigIsGood", BindingFlags.Static | BindingFlags.NonPublic),
-			transpiler: new HarmonyMethod(typeof(NewRunOptionsPatches).GetMethod("NewRunOptions_EnsureRunConfigIsGood_Transpiler", BindingFlags.Static | BindingFlags.NonPublic))
+			original: typeof(NewRunOptions).GetMethod("EnsureRunConfigIsGood", AccessTools.all),
+			transpiler: new HarmonyMethod(typeof(NewRunOptionsPatches).GetMethod("NewRunOptions_EnsureRunConfigIsGood_Transpiler", AccessTools.all))
 		);
 		harmony.TryPatch(
 			logger: Instance.Logger!,
-			original: typeof(NewRunOptions).GetMethod("OnMouseDown"),
-			transpiler: new HarmonyMethod(typeof(NewRunOptionsPatches).GetMethod("NewRunOptions_OnMouseDown_Transpiler", BindingFlags.Static | BindingFlags.NonPublic))
+			original: typeof(NewRunOptions).GetMethod("OnMouseDown", AccessTools.all),
+			transpiler: new HarmonyMethod(typeof(NewRunOptionsPatches).GetMethod("NewRunOptions_OnMouseDown_Transpiler", AccessTools.all))
 		);
 		harmony.TryPatch(
 			logger: Instance.Logger!,
-			original: typeof(NewRunOptions).GetMethod("GetDifficultyColor"),
-			postfix: new HarmonyMethod(typeof(NewRunOptionsPatches).GetMethod("NewRunOptions_GetDifficultyColor_Postfix", BindingFlags.Static | BindingFlags.NonPublic))
+			original: typeof(NewRunOptions).GetMethod("GetDifficultyColor", AccessTools.all),
+			postfix: new HarmonyMethod(typeof(NewRunOptionsPatches).GetMethod("NewRunOptions_GetDifficultyColor_Postfix", AccessTools.all))
 		);
 		harmony.TryPatch(
 			logger: Instance.Logger!,
-			original: typeof(NewRunOptions).GetMethod("GetDifficultyColorLogbook"),
-			postfix: new HarmonyMethod(typeof(NewRunOptionsPatches).GetMethod("NewRunOptions_GetDifficultyColorLogbook_Postfix", BindingFlags.Static | BindingFlags.NonPublic))
+			original: typeof(NewRunOptions).GetMethod("GetDifficultyColorLogbook", AccessTools.all),
+			postfix: new HarmonyMethod(typeof(NewRunOptionsPatches).GetMethod("NewRunOptions_GetDifficultyColorLogbook_Postfix", AccessTools.all))
 		);
 		harmony.TryPatch(
 			logger: Instance.Logger!,
-			original: typeof(NewRunOptions).GetMethod("DifficultyOptions", BindingFlags.NonPublic | BindingFlags.Instance),
-			transpiler: new HarmonyMethod(typeof(NewRunOptionsPatches).GetMethod("NewRunOptions_DifficultyOptions_Transpiler", BindingFlags.Static | BindingFlags.NonPublic))
+			original: typeof(NewRunOptions).GetMethod("DifficultyOptions", AccessTools.all),
+			transpiler: new HarmonyMethod(typeof(NewRunOptionsPatches).GetMethod("NewRunOptions_DifficultyOptions_Transpiler", AccessTools.all))
 		);
 		
         NewRunOptions.difficulties.Insert(Manifest.Difficulty1, new NewRunOptions.DifficultyLevel

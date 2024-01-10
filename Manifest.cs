@@ -130,8 +130,8 @@ public class Manifest : ISpriteManifest, IModManifest, ICardManifest, IStatusMan
         Harmony harmony = new("MoreDifficulties");
         harmony.TryPatch(
             logger: Logger!,
-			original: typeof(DB).GetMethod("SetLocale", BindingFlags.Public | BindingFlags.Static),
-			postfix: new HarmonyMethod(typeof(Manifest).GetMethod("DB_SetLocale_Postfix", BindingFlags.Static | BindingFlags.NonPublic) ?? throw new Exception("Couldnt find Manifest.NewRunOptions_GetDifficultyColor_Postfix method"))
+			original: typeof(DB).GetMethod("SetLocale", AccessTools.all),
+			postfix: new HarmonyMethod(typeof(Manifest).GetMethod("DB_SetLocale_Postfix", AccessTools.all))
 		);
 
 		ArtifactPatches.Apply(harmony);

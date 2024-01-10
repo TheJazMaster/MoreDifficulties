@@ -13,23 +13,23 @@ internal static class HardmodePatches
 	{
 		harmony.TryPatch(
 			logger: Instance.Logger!,
-			original: typeof(HARDMODE).GetMethod("GetSprite"),
-			postfix: new HarmonyMethod(typeof(HardmodePatches).GetMethod("HARDMODE_GetSprite_Postfix", BindingFlags.Static | BindingFlags.NonPublic))
+			original: typeof(HARDMODE).GetMethod("GetSprite", AccessTools.all),
+			postfix: new HarmonyMethod(typeof(HardmodePatches).GetMethod("HARDMODE_GetSprite_Postfix", AccessTools.all))
 		);
 		harmony.TryPatch(
 			logger: Instance.Logger!,
-			original: typeof(HARDMODE).GetMethod("GetExtraTooltips"),
-			postfix: new HarmonyMethod(typeof(HardmodePatches).GetMethod("HARDMODE_GetExtraTooltips_Postfix", BindingFlags.Static | BindingFlags.NonPublic))
+			original: typeof(HARDMODE).GetMethod("GetExtraTooltips", AccessTools.all),
+			postfix: new HarmonyMethod(typeof(HardmodePatches).GetMethod("HARDMODE_GetExtraTooltips_Postfix", AccessTools.all))
 		);
 		harmony.TryPatch(
 			logger: Instance.Logger!,
-			original: typeof(HARDMODE).GetMethod("OnTurnStart"),
-			postfix: new HarmonyMethod(typeof(HardmodePatches).GetMethod("HARDMODE_OnTurnStart_Postfix", BindingFlags.Static | BindingFlags.NonPublic))
+			original: typeof(HARDMODE).GetMethod("OnTurnStart", AccessTools.all),
+			postfix: new HarmonyMethod(typeof(HardmodePatches).GetMethod("HARDMODE_OnTurnStart_Postfix", AccessTools.all))
 		);
         harmony.TryPatch(
             logger: Instance.Logger!,
-            original: typeof(HARDMODE).GetMethod("OnReceiveArtifact"),
-            postfix: new HarmonyMethod(typeof(HardmodePatches).GetMethod("HARDMODE_OnReceiveArtifact_Postfix", BindingFlags.Static | BindingFlags.NonPublic))
+            original: typeof(HARDMODE).GetMethod("OnReceiveArtifact", AccessTools.all),
+            postfix: new HarmonyMethod(typeof(HardmodePatches).GetMethod("HARDMODE_OnReceiveArtifact_Postfix", AccessTools.all))
         );
 	}
 

@@ -14,18 +14,18 @@ internal static class ArtifactPatches
 	{
 		harmony.TryPatch(
 			logger: Instance.Logger!,
-			original: typeof(Artifact).GetMethod("GetLocName"),
-			postfix: new HarmonyMethod(typeof(ArtifactPatches).GetMethod("Artifact_GetLocName_Postfix", BindingFlags.Static | BindingFlags.NonPublic))
+			original: typeof(Artifact).GetMethod("GetLocName", AccessTools.all),
+			postfix: new HarmonyMethod(typeof(ArtifactPatches).GetMethod("Artifact_GetLocName_Postfix", AccessTools.all))
 		);
         harmony.TryPatch(
             logger: Instance.Logger!,
-            original: typeof(Artifact).GetMethod("OnPlayerDeckShuffle"),
-            postfix: new HarmonyMethod(typeof(ArtifactPatches).GetMethod("Artifact_OnPlayerDeckShuffle_Postfix", BindingFlags.Static | BindingFlags.NonPublic))
+            original: typeof(Artifact).GetMethod("OnPlayerDeckShuffle", AccessTools.all),
+            postfix: new HarmonyMethod(typeof(ArtifactPatches).GetMethod("Artifact_OnPlayerDeckShuffle_Postfix", AccessTools.all))
         );
         harmony.TryPatch(
             logger: Instance.Logger!,
-            original: typeof(InitialBooster).GetMethod("ModifyBaseDamage"),
-            postfix: new HarmonyMethod(typeof(ArtifactPatches).GetMethod("InitialBooster_ModifyBaseDamage_Postfix", BindingFlags.Static | BindingFlags.NonPublic))
+            original: typeof(InitialBooster).GetMethod("ModifyBaseDamage", AccessTools.all),
+            postfix: new HarmonyMethod(typeof(ArtifactPatches).GetMethod("InitialBooster_ModifyBaseDamage_Postfix", AccessTools.all))
         );
 	}
 

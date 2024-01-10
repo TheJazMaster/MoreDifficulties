@@ -20,8 +20,8 @@ internal static class CombatPatches
 	{
         harmony.TryPatch(
             logger: Instance.Logger!,
-            original: typeof(Combat).GetMethod("DrawCards"),
-            transpiler: new HarmonyMethod(typeof(CombatPatches).GetMethod("Combat_DrawCards_Transpiler", BindingFlags.Static | BindingFlags.NonPublic))
+            original: typeof(Combat).GetMethod("DrawCards", AccessTools.all),
+            transpiler: new HarmonyMethod(typeof(CombatPatches).GetMethod("Combat_DrawCards_Transpiler", AccessTools.all))
         );
 	}
 
@@ -39,7 +39,7 @@ internal static class CombatPatches
                 .Insert(SequenceMatcherPastBoundsDirection.After, SequenceMatcherInsertionResultingBounds.IncludingInsertion, new List<CodeInstruction> {
                     new CodeInstruction(OpCodes.Ldarg_1),
                     new CodeInstruction(OpCodes.Ldarg_0),
-                    new CodeInstruction(OpCodes.Call, typeof(CombatPatches).GetMethod("CanShuffle", BindingFlags.NonPublic | BindingFlags.Static)),
+                    new CodeInstruction(OpCodes.Call, typeof(CombatPatches).GetMethod("CanShuffle", AccessTools.all)),
                     new CodeInstruction(OpCodes.Brtrue, newLabel),
                     new CodeInstruction(OpCodes.Ret),
                     new CodeInstruction(OpCodes.Nop).WithLabels(newLabel),

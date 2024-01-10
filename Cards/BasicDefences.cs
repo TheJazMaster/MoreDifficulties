@@ -9,7 +9,7 @@ public class BasicDefences : DodgeColorless
 
 	public override string Name()
 	{
-		return "Basic Maneuvers";
+		return "Basic Defences";
 	}
 
 	public override CardData GetData(State state)

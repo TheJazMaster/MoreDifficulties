@@ -12,6 +12,7 @@ public static class PirateBossPatch {
 	[HarmonyPostfix]
 	private static void BuildShipForSelf_Postfix(PirateBoss __instance, Ship __result, State s) {
 		if (s.GetDifficulty() >= 5) {
+			__result.parts[6].stunModifier = PStunMod.unstunnable;
 			__result.parts[7].stunModifier = PStunMod.unstunnable;
 			__result.hull += 6;
 			__result.hullMax += 6;
@@ -39,7 +40,7 @@ public static class PirateBossPatch {
 						fast = true
 					});
 				}
-				if (ownShip.parts[i].type == PType.cockpit && !ownShip.parts[i].flip && __instance.aiCounter % 2 == 1)
+				if (ownShip.parts[i].type == PType.cockpit && ownShip.parts[i].flip && __instance.aiCounter % 2 == 1)
 				{
 					list.Add(new IntentGiveCard
 					{
@@ -77,10 +78,10 @@ public static class PirateBossPatch {
 					moveDir = s.ship.x + s.ship.parts.Count / 2 + 1 - (ownShip.x + ownShip.parts.Count / 2);
 					foreach (Intent item in list)
 					{
-						if (item is IntentMissile intentMissile)
-						{
-							intentMissile.missileType = MissileType.heavy;
-						}
+						// if (item is IntentMissile intentMissile)
+						// {
+						// 	intentMissile.missileType = MissileType.heavy;
+						// }
 						if (item is IntentAttack intentAttack)
 						{
 							intentAttack.damage++;

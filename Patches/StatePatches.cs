@@ -20,12 +20,12 @@ internal static class StatePatches
 		harmony.TryPatch(
 			logger: Instance.Logger!,
 			original: typeof(State).GetNestedTypes(AccessTools.all).SelectMany(t => t.GetMethods(AccessTools.all)).First(m => m.Name.StartsWith("<PopulateRun>") && m.ReturnType == typeof(Route)),
-			transpiler: new HarmonyMethod(typeof(StatePatches).GetMethod("State_PopulateRun_Delegate_Transpiler", BindingFlags.Static | BindingFlags.NonPublic))
+			transpiler: new HarmonyMethod(typeof(StatePatches).GetMethod("State_PopulateRun_Delegate_Transpiler", AccessTools.all))
 		);
         harmony.TryPatch(
 			logger: Instance.Logger!,
-            original: typeof(State).GetMethod("PopulateRun"),
-            postfix: new HarmonyMethod(typeof(StatePatches).GetMethod("State_PopulateRun_Postfix", BindingFlags.Static | BindingFlags.NonPublic))
+            original: typeof(State).GetMethod("PopulateRun", AccessTools.all),
+            postfix: new HarmonyMethod(typeof(StatePatches).GetMethod("State_PopulateRun_Postfix", AccessTools.all))
         );
 	}
 
