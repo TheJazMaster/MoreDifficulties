@@ -18,6 +18,7 @@ public class BasicManeuvers : DodgeColorless
 			cost = upgrade == Upgrade.B ? 0 : 1,
 			art = art.Value,
 			artTint = "7a78ff",
+			flippable = upgrade == Upgrade.A,
 			exhaust = upgrade == Upgrade.B
 		};
 	}

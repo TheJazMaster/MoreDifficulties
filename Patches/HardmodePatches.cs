@@ -84,8 +84,8 @@ internal static class HardmodePatches
 
     private static void HARDMODE_OnReceiveArtifact_Postfix(HARDMODE __instance, State state) {
         if (__instance.difficulty >= Manifest.Difficulty1) {
-			state.SendCardToDeck(new DodgeColorless(), doAnimation: false, insertRandomly: true);
-			state.SendCardToDeck(new BasicShieldColorless(), doAnimation: false, insertRandomly: true);
+			// state.SendCardToDeck(new DodgeColorless(), doAnimation: false, insertRandomly: true);
+			// state.SendCardToDeck(new BasicShieldColorless(), doAnimation: false, insertRandomly: true);
 		}
     }
 }

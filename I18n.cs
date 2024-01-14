@@ -18,9 +18,8 @@ internal static class I18n
 @"</c>: Take a <c=downside>downside</c> on boot sequence
 Events are harder
 Start combat with a <c=downside>BRITTLE</c> cockpit
+Your basic cards have worse upgrades
 +1 <c=card>Basic Shot</c>
-+1 <c=card>Basic Block</c>
-+1 <c=card>Basic Dodge</c>
 +1 <c=card>Corrupted Core</c>
 Less pre-upgraded card offerings
 -3 max hull
@@ -28,21 +27,19 @@ Less pre-upgraded card offerings
 Elites only offer 2 artifacts
 Start with 50% hull missing
 Most enemies are harder!
-Shuffling your deck costs 1 <c=energy>ENERGY</c>!";
+Shuffling your deck adds a <c=card>Fatigue</c> to your draw pile.";
     public static readonly string difficultyDescLoc2En = "<c=artifact>" + difficultyLoc2En + 
 @"</c>: Take a <c=downside>downside</c> on boot sequence
 Events are harder
 Start combat with a <c=downside>BRITTLE</c> cockpit
 Your basic cards have worse upgrades
-+1 <c=card>Basic Offences</c>
-+1 <c=card>Basic Defences</c>
-+1 <c=card>Basic Maneuvers</c>
++1 <c=card>Basic Shot</c>
 +1 <c=card>Corrupted Core</c>
 Less pre-upgraded card offerings
 -3 max hull
 1 less max hull gained from boss kills
 Elites only offer 2 artifacts
 Start with 50% hull missing
-All enemies and bosses are EVEN HARDER!
-Shuffling your deck costs 1 <c=energy>ENERGY</c>!";
+Shuffling your deck adds a <c=card>Fatigue</c> to your draw pile.
+All enemies and bosses are EVEN HARDER!";
 }

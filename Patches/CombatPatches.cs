@@ -18,11 +18,12 @@ internal static class CombatPatches
 
 	public static void Apply(Harmony harmony)
 	{
-        harmony.TryPatch(
-            logger: Instance.Logger!,
-            original: typeof(Combat).GetMethod("DrawCards", AccessTools.all),
-            transpiler: new HarmonyMethod(typeof(CombatPatches).GetMethod("Combat_DrawCards_Transpiler", AccessTools.all))
-        );
+        // Reshuffling is no longer limited
+        // harmony.TryPatch(
+        //     logger: Instance.Logger!,
+        //     original: typeof(Combat).GetMethod("DrawCards", AccessTools.all),
+        //     transpiler: new HarmonyMethod(typeof(CombatPatches).GetMethod("Combat_DrawCards_Transpiler", AccessTools.all))
+        // );
 	}
 
     private static IEnumerable<CodeInstruction> Combat_DrawCards_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator il, MethodBase originalMethod) {
@@ -54,15 +55,16 @@ internal static class CombatPatches
 	}
 
     private static bool CanShuffle(State s, Combat c) {
-        foreach (Artifact item in s.EnumerateAllArtifacts())
-        {
-            if (item is HARDMODE hardmode && hardmode.difficulty >= Manifest.Difficulty1 && c.energy <= 0) {
-                item.Pulse();
-                Audio.Play(Event.ZeroEnergy);
-                c.pulseEnergyBad = 0.5;
-                return false;
-            }
-        }
+        // Reshuffling is no longer limited
+        // foreach (Artifact item in s.EnumerateAllArtifacts())
+        // {
+        //     if (item is HARDMODE hardmode && hardmode.difficulty >= Manifest.Difficulty1 && c.energy <= 0) {
+        //         item.Pulse();
+        //         Audio.Play(Event.ZeroEnergy);
+        //         c.pulseEnergyBad = 0.5;
+        //         return false;
+        //     }
+        // }
         return true;
     }
 }

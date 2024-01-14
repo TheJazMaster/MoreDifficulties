@@ -12,7 +12,7 @@ public static class MediumAncientPatch {
 	[HarmonyPatch(typeof(MediumAncient), nameof(MediumAncient.OnCombatStart))]
 	[HarmonyPostfix]
 	private static void OnCombatStart_Postfix(MediumAncient __instance, State s, Combat c) {
-		if (s.GetDifficulty() >= 5)
+		if (s.GetDifficulty() >= Manifest.Difficulty2)
 			c.Queue(new AStatus
 			{
 				targetPlayer = false,

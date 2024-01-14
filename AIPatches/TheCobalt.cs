@@ -11,7 +11,7 @@ public static class TheCobaltPatch {
 	[HarmonyPatch(typeof(TheCobalt), nameof(TheCobalt.BuildShipForSelf))]
 	[HarmonyPostfix]
 	private static void BuildShipForSelf_Postfix(TheCobalt __instance, Ship __result, State s) {
-		if (s.GetDifficulty() >= 5)
+		if (s.GetDifficulty() >= Manifest.Difficulty2)
 			__result.parts[5].stunModifier = PStunMod.unstunnable;
 	}
 

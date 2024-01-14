@@ -14,7 +14,7 @@ public static class MissileCowardZ3Patch {
 	[HarmonyPatch(typeof(MissileCowardZ3), nameof(MissileCowardZ3.BuildShipForSelf))]
 	[HarmonyPostfix]
 	private static void BuildShipForSelf_Postfix(MissileCowardZ3 __instance, Ship __result, State s) {
-		if (s.GetDifficulty() >= 5)
+		if (s.GetDifficulty() >= Manifest.Difficulty2)
 			__result.parts[1].damageModifier = PDamMod.armor;
 	}
 

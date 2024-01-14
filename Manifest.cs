@@ -43,6 +43,7 @@ public class Manifest : ISpriteManifest, IModManifest, ICardManifest, IStatusMan
     public static ExternalCard? BasicManeuversCard { get; private set; }
     public static ExternalCard? BasicBroadcastCard { get; private set; }
     public static ExternalCard? BegCard { get; private set; }
+    public static ExternalCard? FatigueCard { get; private set; }
 
     public DirectoryInfo? ModRootFolder { get; set; }
     public DirectoryInfo? GameRootFolder { get; set; }
@@ -112,6 +113,7 @@ public class Manifest : ISpriteManifest, IModManifest, ICardManifest, IStatusMan
         BasicManeuversCard = RegisterCard(registry, typeof(BasicManeuvers), colorless, "Basic Maneuvers");
         BasicBroadcastCard = RegisterCard(registry, typeof(BasicBroadcast), colorless, "Basic Broadcast");
         BegCard = RegisterCard(registry, typeof(Beg), trash, "Beg");
+        FatigueCard = RegisterCard(registry, typeof(Fatigue), trash, "Fatigue");
     }
 
     void IStatusManifest.LoadManifest(IStatusRegistry registry) 

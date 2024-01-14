@@ -31,10 +31,15 @@ internal static class ArtifactPatches
 
     private static void Artifact_OnPlayerDeckShuffle_Postfix(Artifact __instance, State state, Combat combat) {
         if (__instance is HARDMODE hardmode && hardmode.difficulty >= Manifest.Difficulty1 && state.deck.Count > 0)
-            combat.QueueImmediate(new AEnergyImportant {
-                changeAmount = -1,
-                timer = 0.7,
-                pulseAmount = 1,
+            // combat.QueueImmediate(new AEnergyImportant {
+            //     changeAmount = -1,
+            //     timer = 0.7,
+            //     pulseAmount = 1,
+			// 	artifactPulse = __instance.Key()
+            // });
+            combat.QueueImmediate(new AAddCard {
+                amount = 1,
+                card = new Fatigue(),
 				artifactPulse = __instance.Key()
             });
     }

@@ -11,7 +11,7 @@ public static class PirateBossPatch {
 	[HarmonyPatch(typeof(PirateBoss), nameof(PirateBoss.BuildShipForSelf))]
 	[HarmonyPostfix]
 	private static void BuildShipForSelf_Postfix(PirateBoss __instance, Ship __result, State s) {
-		if (s.GetDifficulty() >= 5) {
+		if (s.GetDifficulty() >= Manifest.Difficulty2) {
 			__result.parts[6].stunModifier = PStunMod.unstunnable;
 			__result.parts[7].stunModifier = PStunMod.unstunnable;
 			__result.hull += 6;

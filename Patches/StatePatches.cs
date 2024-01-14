@@ -57,7 +57,7 @@ internal static class StatePatches
 	}
 
     private static void State_PopulateRun_Postfix(State __instance, int difficulty) {
-        if (difficulty >= Manifest.Difficulty2) {
+        if (difficulty >= Manifest.Difficulty1) {
             List<Card> toRemove = new List<Card>();
             List<Card> toAdd = new List<Card>();
             foreach (Card card in __instance.deck)
