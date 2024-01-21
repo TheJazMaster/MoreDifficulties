@@ -18,6 +18,7 @@ public class BasicBroadcast : DroneshiftColorless
 			cost = upgrade == Upgrade.B ? 0 : 1,
 			artTint = "59f790",
 			art = art.Value,
+			flippable = upgrade == Upgrade.A,
 			exhaust = upgrade == Upgrade.B
 		};
 	}

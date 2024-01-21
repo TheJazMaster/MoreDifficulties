@@ -27,7 +27,8 @@ Less pre-upgraded card offerings
 Elites only offer 2 artifacts
 Start with 50% hull missing
 Most enemies are harder!
-Shuffling your deck adds a <c=card>Fatigue</c> to your draw pile.";
+Shuffling your deck adds a <c=card>Fatigue</c> to your draw pile
+You can no longer have more than 6 <c=status>EVADE</c> at a time.";
     public static readonly string difficultyDescLoc2En = "<c=artifact>" + difficultyLoc2En + 
 @"</c>: Take a <c=downside>downside</c> on boot sequence
 Events are harder
