@@ -12,6 +12,11 @@ internal static class I18n
     public static readonly string difficultyLoc1En = "BRUTAL";
     public static readonly string difficultyLoc2En = "COSMIC";
 
+    public static readonly string altStartersLoc = "altStarters";
+    public static readonly string altStartersDescLoc = "altStartersDesc";
+    public static readonly string altStartersLocEn = "ALT STARTERS";
+    public static readonly string altStartersDescLocEn = "This character has alternate starter cards enabled.";
+
     public static readonly string difficultyDescLoc1 = "artifact.HARDMODE_4.desc";
     public static readonly string difficultyDescLoc2 = "artifact.HARDMODE_5.desc";
     public static readonly string difficultyDescLoc1En = "<c=artifact>" + difficultyLoc1En + 
@@ -28,7 +33,7 @@ Elites only offer 2 artifacts
 Start with 50% hull missing
 Most enemies are harder!
 Shuffling your deck adds a <c=card>Fatigue</c> to your draw pile
-You can no longer have more than 6 <c=status>EVADE</c> at a time.";
+You can no longer have more than 7 <c=status>EVADE</c> at a time.";
     public static readonly string difficultyDescLoc2En = "<c=artifact>" + difficultyLoc2En + 
 @"</c>: Take a <c=downside>downside</c> on boot sequence
 Events are harder
@@ -42,5 +47,6 @@ Less pre-upgraded card offerings
 Elites only offer 2 artifacts
 Start with 50% hull missing
 Shuffling your deck adds a <c=card>Fatigue</c> to your draw pile.
+You can no longer have more than 7 <c=status>EVADE</c> at a time.
 All enemies and bosses are EVEN HARDER!";
 }

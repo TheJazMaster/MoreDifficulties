@@ -55,7 +55,7 @@ public static class TheCobaltPatch {
 					},
 					new IntentGiveCard {
 						card = alt ? new TrashExhaustOthers() : new TrashUnplayable(),
-						destination = CardDestination.Discard,
+						destination = alt ? CardDestination.Discard : CardDestination.Deck,
 						fromX = 2
 					},
 					new IntentAttack {
@@ -74,7 +74,7 @@ public static class TheCobaltPatch {
 					},
 					new IntentGiveCard {
 						card = alt ? new TrashUnplayable() : new TrashExhaustOthers(),
-						destination = CardDestination.Deck,
+						destination = alt ? CardDestination.Deck : CardDestination.Discard,
 						fromX = 8
 					},
 					new IntentAttack {
@@ -90,7 +90,7 @@ public static class TheCobaltPatch {
 			};
 		}, delegate
 		{
-			int dir = ((s.ship.x + s.ship.parts.Count / 2 + 1 > ownShip.x + ownShip.parts.Count / 2) ? __instance.moveDistance : (__instance.moveDistance * -1));
+			int dir = (s.ship.x + s.ship.parts.Count / 2 + 1 > ownShip.x + ownShip.parts.Count / 2) ? __instance.moveDistance : (__instance.moveDistance * -1);
 			bool escaping = AIUtils.GetUnderhang(s, c, ownShip) < 2;
 			return new EnemyDecision
 			{

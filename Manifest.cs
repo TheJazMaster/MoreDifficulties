@@ -15,35 +15,41 @@ using Microsoft.Xna.Framework.Graphics;
 
 namespace TheJazMaster.MoreDifficulties;
 
-public class Manifest : ISpriteManifest, IModManifest, ICardManifest, IStatusManifest, IGlossaryManifest
+public class Manifest : ISpriteManifest, IModManifest, ICardManifest, IStatusManifest, IGlossaryManifest, IApiProviderManifest
 {
     public string Name { get; init; } = typeof(Manifest).Namespace!;
 
     internal static Manifest Instance { get; private set; } = null!;
+    internal static ApiImplementation Api { get; private set; } = null!;
+
+    internal IKokoroApi KokoroApi { get; private set; } = null!;
+
+    internal AltStarters AltStarters { get; private set; } = null!;
 
     public IEnumerable<DependencyEntry> Dependencies => Array.Empty<DependencyEntry>();
 
     public ILogger? Logger { get; set; }
-    public static ILogger? TheLogger { get; set; }
 
-    public static ExternalGlossary? BegGlossary { get; private set; }
-    public static ExternalSprite? BegIcon { get; private set; }
-    public static ExternalSprite? BegYesArt { get; private set; }
-    public static ExternalSprite? BegNoArt { get; private set; }
+    public static ExternalGlossary BegGlossary { get; private set; } = null!;
+    public static ExternalSprite BegIcon { get; private set; } = null!;
+    public static ExternalSprite BegYesArt { get; private set; } = null!;
+    public static ExternalSprite BegNoArt { get; private set; } = null!;
 
-    public static ExternalSprite? EasyModeArtifactSprite { get; private set; }
-    public static ExternalSprite? DifficultyArtifactSprite1 { get; private set; }
-    public static ExternalSprite? DifficultyArtifactSprite2 { get; private set; }
+    public static ExternalSprite EasyModeArtifactSprite { get; private set; } = null!;
+    public static ExternalSprite DifficultyArtifactSprite1 { get; private set; } = null!;
+    public static ExternalSprite DifficultyArtifactSprite2 { get; private set; } = null!;
+    public static ExternalSprite AltStartersMarker { get; private set; } = null!;
+    public static ExternalSprite AltStartersMarkerOff { get; private set; } = null!;
 
-    public static ExternalSprite? GrazerStatusIcon { get; private set; }
-    public static ExternalStatus? GrazerStatus { get; private set; }
+    public static ExternalSprite GrazerStatusIcon { get; private set; } = null!;
+    public static ExternalStatus GrazerStatus { get; private set; } = null!;
 
-    public static ExternalCard? BasicOffencesCard { get; private set; }
-    public static ExternalCard? BasicDefencesCard { get; private set; }
-    public static ExternalCard? BasicManeuversCard { get; private set; }
-    public static ExternalCard? BasicBroadcastCard { get; private set; }
-    public static ExternalCard? BegCard { get; private set; }
-    public static ExternalCard? FatigueCard { get; private set; }
+    public static ExternalCard BasicOffencesCard { get; private set; } = null!;
+    public static ExternalCard BasicDefencesCard { get; private set; } = null!;
+    public static ExternalCard BasicManeuversCard { get; private set; } = null!;
+    public static ExternalCard BasicBroadcastCard { get; private set; } = null!;
+    public static ExternalCard BegCard { get; private set; } = null!;
+    public static ExternalCard FatigueCard { get; private set; } = null!;
 
     public DirectoryInfo? ModRootFolder { get; set; }
     public DirectoryInfo? GameRootFolder { get; set; }
@@ -69,7 +75,7 @@ public class Manifest : ISpriteManifest, IModManifest, ICardManifest, IStatusMan
     private ExternalCard RegisterCard(ICardRegistry registry, Type type, ExternalDeck deck, string? name = null)
     {
         var card = new ExternalCard(Name + ".Cards." + type.Name, type, ExternalSprite.GetRaw((int)Enum.Parse<Spr>("cards_colorless")), deck);
-        card.AddLocalisation((name == null) ? type.Name : name);
+        card.AddLocalisation(name ?? type.Name);
         registry.RegisterCard(card);
         return card!;
     }
@@ -81,6 +87,9 @@ public class Manifest : ISpriteManifest, IModManifest, ICardManifest, IStatusMan
         registry.RegisterGlossary(glossary);
         return glossary;
     }
+
+	public object? GetApi(IManifest requestingMod)
+		=> new ApiImplementation();
 
     void IGlossaryManifest.LoadManifest(IGlossaryRegisty registry)
     {
@@ -101,6 +110,9 @@ public class Manifest : ISpriteManifest, IModManifest, ICardManifest, IStatusMan
         BegIcon = RegisterSprite(registry, "BegIcon", Path.Combine(ModRootFolder.FullName, "Sprites", Path.GetFileName("beg_icon.png")));
 
         GrazerStatusIcon = RegisterSprite(registry, "GrazerStatusIcon", Path.Combine(ModRootFolder.FullName, "Sprites", Path.GetFileName("grazer.png")));
+
+        AltStartersMarker = RegisterSprite(registry, "AltStartersMarker", Path.Combine(ModRootFolder.FullName, "Sprites", Path.GetFileName("altMarker.png")));
+        AltStartersMarkerOff = RegisterSprite(registry, "AltStartersMarkerOff", Path.Combine(ModRootFolder.FullName, "Sprites", Path.GetFileName("altMarkerOff.png")));
     }
 
     void ICardManifest.LoadManifest(ICardRegistry registry)
@@ -129,6 +141,9 @@ public class Manifest : ISpriteManifest, IModManifest, ICardManifest, IStatusMan
 		ReflectionExt.CurrentAssemblyLoadContext.LoadFromAssemblyPath(Path.Combine(ModRootFolder!.FullName, "Shrike.dll"));
 		ReflectionExt.CurrentAssemblyLoadContext.LoadFromAssemblyPath(Path.Combine(ModRootFolder!.FullName, "Shrike.Harmony.dll"));
 
+        KokoroApi = contact.GetApi<IKokoroApi>("Shockah.Kokoro")!;
+        KokoroApi.RegisterTypeForExtensionData(typeof(State));
+
         Harmony harmony = new("MoreDifficulties");
         harmony.TryPatch(
             logger: Logger!,
@@ -136,6 +151,7 @@ public class Manifest : ISpriteManifest, IModManifest, ICardManifest, IStatusMan
 			postfix: new HarmonyMethod(typeof(Manifest).GetMethod("DB_SetLocale_Postfix", AccessTools.all))
 		);
 
+        AltStarters = new AltStarters();
 		ArtifactPatches.Apply(harmony);
 		HardmodePatches.Apply(harmony);
 		CombatPatches.Apply(harmony);
@@ -143,6 +159,7 @@ public class Manifest : ISpriteManifest, IModManifest, ICardManifest, IStatusMan
 		RunConfigPatches.Apply(harmony);
 		RunSummaryRoutePatches.Apply(harmony);
 		StatePatches.Apply(harmony);
+        CharacterPatches.Apply(harmony);
 
 		harmony.PatchAll(typeof(Manifest).Assembly);
     }
@@ -156,6 +173,9 @@ public class Manifest : ISpriteManifest, IModManifest, ICardManifest, IStatusMan
 
         DB.currentLocale.strings[I18n.difficultyDescLoc1] = I18n.difficultyDescLoc1En;
         DB.currentLocale.strings[I18n.difficultyDescLoc2] = I18n.difficultyDescLoc2En;
+
+        DB.currentLocale.strings[I18n.altStartersLoc] = I18n.altStartersLocEn;
+        DB.currentLocale.strings[I18n.altStartersDescLoc] = I18n.altStartersDescLocEn;
     }
 
 }

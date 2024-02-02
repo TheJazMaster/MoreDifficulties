@@ -8,6 +8,7 @@ using System;
 using System.Linq;
 using System.Reflection.Emit;
 using System.Reflection;
+using System.Text.RegularExpressions;
 
 namespace TheJazMaster.MoreDifficulties;
 
@@ -15,6 +16,7 @@ internal static class StatePatches
 {
 	private static Manifest Instance => Manifest.Instance;
 
+	private static Type displayClass = null!;
 	public static void Apply(Harmony harmony)
 	{
 		harmony.TryPatch(
@@ -26,6 +28,17 @@ internal static class StatePatches
 			logger: Instance.Logger!,
             original: typeof(State).GetMethod("PopulateRun", AccessTools.all),
             postfix: new HarmonyMethod(typeof(StatePatches).GetMethod("State_PopulateRun_Postfix", AccessTools.all))
+        );
+
+		// foreach (MemberInfo m in typeof(State).GetMembers().Where((MemberInfo m) => m.MemberType == MemberTypes.NestedType))
+		// 	foreach (MethodInfo me in (m as Type)!.GetMethods(AccessTools.all)) {
+		// 		Instance.Logger.LogInformation(m.Name + ": " + me.Name + " \t\t(" + Regex.Match(me.Name, ".*AddStartersForCharacter.*").Success +")");
+		// 	}
+		displayClass = (typeof(State).GetMembers().Where((MemberInfo m) => m.MemberType == MemberTypes.NestedType && (m as Type)!.GetMethods().Any((MethodInfo me) => Regex.Match(me.Name, ".*AddStartersForCharacter.*").Success)).First() as Type)!;
+        harmony.TryPatch(
+			logger: Instance.Logger!,
+            original: displayClass.GetMethods().Where((MethodInfo me) => Regex.Match(me.Name, ".*AddStartersForCharacter.*").Success).First(),
+            prefix: new HarmonyMethod(typeof(StatePatches).GetMethod("State_AddStartersForCharacter_Prefix", AccessTools.all))
         );
 	}
 
@@ -42,7 +55,7 @@ internal static class StatePatches
 				)
 
 				.PointerMatcher(SequenceMatcherRelativeElement.Last)
-				.ExtractBranchTarget(out var branchTarget)
+				.GetBranchTarget(out var branchTarget)
 
 				.Encompass(SequenceMatcherEncompassDirection.Before, 1)
 				.Replace(new CodeInstruction(OpCodes.Brfalse, branchTarget))
@@ -64,16 +77,24 @@ internal static class StatePatches
             {
                 if (card is CannonColorless) {
                     toRemove.Add(card);
-                    toAdd.Add(new BasicOffences());
+                    toAdd.Add(new BasicOffences {
+						upgrade = card.upgrade
+					});
                 } else if (card is DodgeColorless) {
                     toRemove.Add(card);
-                    toAdd.Add(new BasicManeuvers());
+                    toAdd.Add(new BasicManeuvers {
+						upgrade = card.upgrade
+					});
                 } else if (card is BasicShieldColorless) {
                     toRemove.Add(card);
-                    toAdd.Add(new BasicDefences());
+                    toAdd.Add(new BasicDefences {
+						upgrade = card.upgrade
+					});
                 } else if (card is DroneshiftColorless) {
                     toRemove.Add(card);
-                    toAdd.Add(new BasicBroadcast());
+                    toAdd.Add(new BasicBroadcast {
+						upgrade = card.upgrade
+					});
                 }
             }
             foreach (Card card in toRemove) {
@@ -84,4 +105,26 @@ internal static class StatePatches
             }
         }
     }
+
+	private static bool State_AddStartersForCharacter_Prefix(object __instance, Deck d)
+	{
+		FieldInfo stateField = displayClass.GetFields().Where((FieldInfo f) => f.FieldType == typeof(State)).First();
+		State state = (State) stateField!.GetValue(__instance)!;
+		if (Instance.AltStarters.AreAltStartersEnabled(state, d)) {
+
+			if (!Instance.AltStarters.altStarters.TryGetValue(d, out var value))
+				StarterDeck.starterSets.TryGetValue(d, out value!);
+			
+			foreach (Card item4 in value.cards.Select((Card c) => c.CopyWithNewId()))
+			{
+				state.SendCardToDeck(item4);
+			}
+			foreach (Artifact item5 in value.artifacts.Select((Artifact r) => Mutil.DeepCopy(r)))
+			{
+				state.SendArtifactToChar(item5);
+			}
+			return false;
+		}
+		return true;
+	}
 }

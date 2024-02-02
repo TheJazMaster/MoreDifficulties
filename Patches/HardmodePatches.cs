@@ -86,7 +86,7 @@ internal static class HardmodePatches
         if (__instance.difficulty >= Manifest.Difficulty1) {
 			if (!state.ship.evadeMax.HasValue || state.ship.evadeMax > 6)
 			{
-				state.ship.evadeMax = 6;
+				state.ship.evadeMax = 7;
 			}
 			// state.SendCardToDeck(new DodgeColorless(), doAnimation: false, insertRandomly: true);
 			// state.SendCardToDeck(new BasicShieldColorless(), doAnimation: false, insertRandomly: true);
