@@ -48,6 +48,11 @@ internal static class NewRunOptionsPatches
 			original: typeof(NewRunOptions).GetMethod("DifficultyOptions", AccessTools.all),
 			transpiler: new HarmonyMethod(typeof(NewRunOptionsPatches).GetMethod("NewRunOptions_DifficultyOptions_Transpiler", AccessTools.all))
 		);
+		harmony.TryPatch(
+			logger: Instance.Logger!,
+			original: typeof(NewRunOptions).GetMethod("Randomize", AccessTools.all),
+			postfix: new HarmonyMethod(typeof(NewRunOptionsPatches).GetMethod("NewRunOptions_Randomize_Postfix", AccessTools.all))
+		);
 		// harmony.TryPatch(
 		// 	logger: Instance.Logger!,
 		// 	original: typeof(NewRunOptions).GetMethod("Render", AccessTools.all),
@@ -146,13 +151,13 @@ internal static class NewRunOptionsPatches
 			.Find(
 				ILMatches.Ldarg(2),
 				ILMatches.Ldfld("key"),
-				ILMatches.LdcI4((int)UK.newRun_clear),
+				ILMatches.LdcI4((int)StableUK.newRun_clear),
 				ILMatches.AnyCall,
 				ILMatches.Brfalse
 			)
 			.Insert(SequenceMatcherPastBoundsDirection.After, SequenceMatcherInsertionResultingBounds.IncludingInsertion, new List<CodeInstruction> {
 				new(OpCodes.Ldarg_1),
-				new(OpCodes.Call, typeof(NewRunOptionsPatches).GetMethod("ClearAlts", AccessTools.all))
+				new(OpCodes.Call, typeof(NewRunOptionsPatches).GetMethod("ClearAlts", AccessTools.all, new[] {typeof(G)}))
 			})
 			.AllElements();	
 	}
@@ -160,9 +165,24 @@ internal static class NewRunOptionsPatches
 	private static void ClearAlts(G g)
 	{
 		var state = g.state;
+		ClearAlts(state);
+	}
+
+	private static void ClearAlts(State state)
+	{
 		foreach((Deck deck, _) in DB.decks)
 		{
 			Instance.KokoroApi.RemoveExtensionData(state, deck.Key());
+		}
+	}
+
+	private static void NewRunOptions_Randomize_Postfix(State s, Rand rng)
+	{
+		ClearAlts(s);
+		foreach (Deck character in s.runConfig.selectedChars) {
+			if (Instance.AltStarters.HasAltStarters(character)) {
+				Instance.AltStarters.SetAltStarters(s, character, rng.Next() >= 0.5);
+			}
 		}
 	}
 
@@ -225,7 +245,7 @@ internal static class NewRunOptionsPatches
 	// {
 	// 	// Rect rect = default(Rect) + new Vec(404, 210);
 	// 	// Draw.Text(Loc.T(I18n.altStartersLoc, I18n.altStartersLocEn), rect.x + 16, rect.y, null, Colors.buttonBoxNormal);
-	// 	// ButtonResult checkBox = CheckboxBig(onMouseDown: Input.gamepadIsActiveInput ? null : MouseListener, noHover: Input.gamepadIsActiveInput, g: g, localV: new Vec(0, 0), key: new UIKey(UK.card, 1), isSelected: Instance.AltStarters.AreAltStartersEnabled(), textColor: null, boxColor: Colors.buttonBoxNormal);
+	// 	// ButtonResult checkBox = CheckboxBig(onMouseDown: Input.gamepadIsActiveInput ? null : MouseListener, noHover: Input.gamepadIsActiveInput, g: g, localV: new Vec(0, 0), key: new UIKey(StableUK.card, 1), isSelected: Instance.AltStarters.AreAltStartersEnabled(), textColor: null, boxColor: Colors.buttonBoxNormal);
 	// 	// if (checkBox.isHover)
 	// 	// {
 	// 	// 	g.tooltips.Add(checkBox.v - new Vec(110, 25), new TTText(Loc.T(I18n.altStartersDescLoc, I18n.altStartersDescLocEn)));

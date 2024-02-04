@@ -1,14 +1,4 @@
 ﻿using HarmonyLib;
-using TheJazMaster.MoreDifficulties.Cards;
-using TheJazMaster.MoreDifficulties.Actions;
-using System.Reflection;
-using static System.Reflection.BindingFlags;
-using Microsoft.Extensions.Logging;
-using Nanoray.Shrike;
-using Nanoray.Shrike.Harmony;
-using System.Reflection.Emit;
-using System.Text;
-using System.Runtime.CompilerServices;
 
 namespace TheJazMaster.MoreDifficulties;
 
@@ -21,12 +11,32 @@ internal static class CharacterPatches
 		harmony.TryPatch(
 			logger: Instance.Logger!,
 			original: typeof(Character).GetMethod("Render", AccessTools.all),
-			postfix: new HarmonyMethod(typeof(CharacterPatches).GetMethod("Character_Render_Postfix", AccessTools.all)),
-			transpiler: new HarmonyMethod(typeof(CharacterPatches).GetMethod("Character_Render_Transpiler", AccessTools.all))
+			postfix: new HarmonyMethod(typeof(CharacterPatches).GetMethod("Character_Render_Postfix", AccessTools.all))
 		);
 	}
 
-	private static void Character_Render_Postfix(Character __instance, G g, int x, int y, bool flipX, bool mini, bool? isSelected, bool autoFocus, UIKey rightHint, UIKey leftHint, UIKey downHint, UIKey upHint)
+	private static void Character_Render_Postfix(Character __instance, G g, int x, int y, bool flipX, bool mini, bool? isSelected, bool autoFocus, UIKey rightHint, UIKey leftHint, UIKey downHint, UIKey upHint, bool renderLocked, bool canFocus, bool showTooltips)
+	{
+		RenderBoxes(__instance, g, x, y, flipX, mini, isSelected, autoFocus, rightHint, leftHint, downHint, upHint);
+		RenderTooltips(__instance, g, mini, renderLocked, canFocus, showTooltips);
+	}
+
+	private static void RenderTooltips(Character __instance, G g, bool mini, bool renderLocked, bool canFocus, bool showTooltips)
+	{
+		if (!showTooltips || !canFocus || renderLocked || __instance.deckType is not { } deck)
+			return;
+		
+		var key = new UIKey(mini ? StableUK.char_mini : StableUK.character, (int)deck, __instance.type);
+		if (g.boxes.FirstOrDefault(b => b.key == key) is not { } box)
+			return;
+		if (!box.IsHover())
+			return;
+
+		if (Instance.AltStarters.AreAltStartersEnabled(g.state, deck))
+			g.tooltips.AddText(g.tooltips.pos, Loc.T(I18n.altStartersDescLoc, I18n.altStartersDescLocEn));
+	}
+
+	private static void RenderBoxes(Character __instance, G g, int x, int y, bool flipX, bool mini, bool? isSelected, bool autoFocus, UIKey rightHint, UIKey leftHint, UIKey downHint, UIKey upHint)
 	{
 		var deckType = __instance.deckType;
 
@@ -45,46 +55,5 @@ internal static class CharacterPatches
 
 		g.Pop();
 	}
-	private static IEnumerable<CodeInstruction> Character_Render_Transpiler(IEnumerable<CodeInstruction> instructions, MethodBase originalMethod)
-	{
-		try
-		{
-			return new SequenceBlockMatcher<CodeInstruction>(instructions)
-				.Find(
-					ILMatches.Ldarg(1),
-					ILMatches.Ldfld("tooltips"),
-					ILMatches.Ldloc<Vec>(originalMethod).CreateLdlocInstruction(out var ldlocPos)
-				)
-				.Find(
-					ILMatches.Ldstr(".desc"),
-					ILMatches.Call("AppendLiteral"),
-					ILMatches.AnyLdloca,
-					ILMatches.Call("ToStringAndClear"),
-					ILMatches.Call("AddGlossary")
-				)
-				.PointerMatcher(SequenceMatcherRelativeElement.Last)
-				.Insert(
-					SequenceMatcherPastBoundsDirection.After, SequenceMatcherInsertionResultingBounds.IncludingInsertion,
-					new CodeInstruction(OpCodes.Ldarg_0),
-					new CodeInstruction(OpCodes.Ldarg_1),
-					ldlocPos,
-					new CodeInstruction(OpCodes.Call, AccessTools.DeclaredMethod(typeof(CharacterPatches), nameof(AddTooltips)))
-				)
-				.AllElements();
-		}
-		catch (Exception ex)
-		{
-			Instance.Logger!.LogError("Could not patch method {Method} - {Mod} probably won't work.\nReason: {Exception}", originalMethod, Instance.Name, ex);
-			return instructions;
-		}
-	}
 
-	private static void AddTooltips(Character character, G g, Vec pos)
-	{
-		if (character.deckType is not { } deck)
-			return;
-
-		if (Instance.AltStarters.AreAltStartersEnabled(g.state, deck))
-			g.tooltips.AddText(pos, Loc.T(I18n.altStartersDescLoc, I18n.altStartersDescLocEn));
-	}
 }
