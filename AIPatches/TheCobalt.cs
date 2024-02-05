@@ -22,21 +22,16 @@ public static class TheCobaltPatch {
 		
 		__instance.aiCounter++;
 
-		var alt = (int)(__instance.aiCounter / 2) % 2 == 0;
+		var alt = __instance.aiCounter / 2 % 2 == 0;
 		__result = AIUtils.MoveSet(__instance.aiCounter, delegate
 		{
-			int dir = ((s.ship.x + s.ship.parts.Count / 2 + 1 > ownShip.x + ownShip.parts.Count / 2) ? __instance.moveDistance : (__instance.moveDistance * -1));
+			int dir = (s.ship.x + s.ship.parts.Count / 2 + 1 > ownShip.x + ownShip.parts.Count / 2) ? __instance.moveDistance : (__instance.moveDistance * -1);
 			bool escaping = Math.Abs(AIUtils.GetUnderhang(s, c, ownShip)) < 2;
 			return new EnemyDecision {
 				actions = escaping ? new List<CardAction> {
 					new AMove {
 						targetPlayer = false,
 						dir = s.ship.x + s.ship.parts.Count / 2 + 1 - (ownShip.x + ownShip.parts.Count / 2)
-					},
-					new AStatus {
-						targetPlayer = false,
-						status = Status.overdrive,
-						statusAmount = 1
 					},
 					new AHurt {
 						targetPlayer = false,
@@ -50,7 +45,8 @@ public static class TheCobaltPatch {
 					},
 					new IntentAttack {
 						damage = 1,
-						status = Status.lockdown,
+						status = Status.drawLessNextTurn,
+						statusAmount = 1,
 						fromX = 1
 					},
 					new IntentGiveCard {
@@ -79,7 +75,8 @@ public static class TheCobaltPatch {
 					},
 					new IntentAttack {
 						damage = 1,
-						status = Status.lockdown,
+						status = Status.drawLessNextTurn,
+						statusAmount = 1,
 						fromX = 9
 					},
 					new IntentAttack {
@@ -127,7 +124,7 @@ public static class TheCobaltPatch {
 						fromX = 4
 					},
 					new IntentAttack {
-						damage = 3,
+						damage = 2,
 						fromX = 5,
 						multiHit = 2
 					},
