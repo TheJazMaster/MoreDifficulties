@@ -96,11 +96,6 @@ public static class TheCobaltPatch {
 						targetPlayer = false,
 						dir = s.ship.x + s.ship.parts.Count / 2 + 1 - (ownShip.x + ownShip.parts.Count / 2)
 					},
-					new AStatus {
-						targetPlayer = false,
-						status = Status.overdrive,
-						statusAmount = 1
-					},
 					new AHurt {
 						targetPlayer = false,
 						hurtAmount = 1

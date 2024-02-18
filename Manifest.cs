@@ -25,6 +25,7 @@ public class Manifest : ISpriteManifest, IModManifest, ICardManifest, IStatusMan
     internal IKokoroApi KokoroApi { get; private set; } = null!;
 
     internal AltStarters AltStarters { get; private set; } = null!;
+    internal LockAndBan LockAndBan { get; private set; } = null!;
 
     public IEnumerable<DependencyEntry> Dependencies => Array.Empty<DependencyEntry>();
 
@@ -40,6 +41,9 @@ public class Manifest : ISpriteManifest, IModManifest, ICardManifest, IStatusMan
     public static ExternalSprite DifficultyArtifactSprite2 { get; private set; } = null!;
     public static ExternalSprite AltStartersMarker { get; private set; } = null!;
     public static ExternalSprite AltStartersMarkerOff { get; private set; } = null!;
+    public static ExternalSprite LockBorder { get; private set; } = null!;
+    public static ExternalSprite BanBorder { get; private set; } = null!;
+    public static ExternalSprite BanBorderAlt { get; private set; } = null!;
 
     public static ExternalSprite GrazerStatusIcon { get; private set; } = null!;
     public static ExternalStatus GrazerStatus { get; private set; } = null!;
@@ -113,6 +117,9 @@ public class Manifest : ISpriteManifest, IModManifest, ICardManifest, IStatusMan
 
         AltStartersMarker = RegisterSprite(registry, "AltStartersMarker", Path.Combine(ModRootFolder.FullName, "Sprites", Path.GetFileName("altMarker.png")));
         AltStartersMarkerOff = RegisterSprite(registry, "AltStartersMarkerOff", Path.Combine(ModRootFolder.FullName, "Sprites", Path.GetFileName("altMarkerOff.png")));
+        LockBorder = RegisterSprite(registry, "LockBorder", Path.Combine(ModRootFolder.FullName, "Sprites", Path.GetFileName("lockBorder.png")));
+        BanBorder = RegisterSprite(registry, "BanBorder", Path.Combine(ModRootFolder.FullName, "Sprites", Path.GetFileName("banBorder.png")));
+        BanBorderAlt = RegisterSprite(registry, "BanBorderAlt", Path.Combine(ModRootFolder.FullName, "Sprites", Path.GetFileName("banBorderAlt.png")));
     }
 
     void ICardManifest.LoadManifest(ICardRegistry registry)
@@ -143,6 +150,8 @@ public class Manifest : ISpriteManifest, IModManifest, ICardManifest, IStatusMan
 
         KokoroApi = contact.GetApi<IKokoroApi>("Shockah.Kokoro")!;
         KokoroApi.RegisterTypeForExtensionData(typeof(State));
+        KokoroApi.RegisterTypeForExtensionData(typeof(RunSummary));
+        KokoroApi.RegisterTypeForExtensionData(typeof(Character));
 
         Harmony harmony = new("MoreDifficulties");
         harmony.TryPatch(
@@ -152,11 +161,13 @@ public class Manifest : ISpriteManifest, IModManifest, ICardManifest, IStatusMan
 		);
 
         AltStarters = new AltStarters();
+        LockAndBan = new LockAndBan();
 		ArtifactPatches.Apply(harmony);
 		HardmodePatches.Apply(harmony);
 		CombatPatches.Apply(harmony);
 		NewRunOptionsPatches.Apply(harmony);
 		RunConfigPatches.Apply(harmony);
+        RunSummaryPatches.Apply(harmony);
 		RunSummaryRoutePatches.Apply(harmony);
 		StatePatches.Apply(harmony);
         CharacterPatches.Apply(harmony);

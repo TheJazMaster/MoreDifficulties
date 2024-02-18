@@ -1,4 +1,5 @@
 using CobaltCoreModding.Definitions.ExternalItems;
+using TheJazMaster.MoreDifficulties.Cards;
 
 namespace TheJazMaster.MoreDifficulties;
 
@@ -13,15 +14,20 @@ public sealed class ApiImplementation : IMoreDifficultiesApi
 		=> Instance.AltStarters.HasAltStarters(deck);
 	public bool AreAltStartersEnabled(State state, Deck deck)
 		=> Instance.AltStarters.AreAltStartersEnabled(state, deck);
+
+	public bool IsBanned(State state, Deck deck)
+		=> Instance.LockAndBan.IsBanned(state, deck);
+	public bool IsLocked(State state, Deck deck)
+		=> Instance.LockAndBan.IsLocked(state, deck);
 		
 	public int Difficulty1 => Manifest.Difficulty1;
 	public int Difficulty2 => Manifest.Difficulty2;
 
-	public ExternalCard BasicOffencesCard => Manifest.BasicOffencesCard;
-    public ExternalCard BasicDefencesCard => Manifest.BasicDefencesCard;
-    public ExternalCard BasicManeuversCard => Manifest.BasicManeuversCard;
-    public ExternalCard BasicBroadcastCard => Manifest.BasicBroadcastCard;
-    public ExternalCard BegCard => Manifest.BegCard;
-    public ExternalCard FatigueCard => Manifest.FatigueCard;
+	public Type BasicOffencesCardType => typeof(BasicOffences);
+    public Type BasicDefencesCardType => typeof(BasicDefences);
+    public Type BasicManeuversCardType => typeof(BasicManeuvers);
+    public Type BasicBroadcastCardType => typeof(BasicBroadcast);
+    public Type BegCardType => typeof(Beg);
+    public Type FatigueCardType => typeof(Fatigue);
 
 }

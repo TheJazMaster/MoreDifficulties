@@ -8,14 +8,17 @@ public interface IMoreDifficultiesApi
     bool HasAltStarters(Deck deck);
     bool AreAltStartersEnabled(State state, Deck deck);
 
+	bool IsBanned(State state, Deck deck);
+	bool IsLocked(State state, Deck deck);
+
 	int Difficulty1 { get; }
 	int Difficulty2 { get; }
-	ExternalCard BasicOffencesCard { get; }
-    ExternalCard BasicDefencesCard { get; }
-    ExternalCard BasicManeuversCard { get; }
-    ExternalCard BasicBroadcastCard { get; }
-    ExternalCard BegCard { get; }
-    ExternalCard FatigueCard { get; }
+	Type BasicOffencesCardType { get; }
+    Type BasicDefencesCardType { get; }
+    Type BasicManeuversCardType { get; }
+    Type BasicBroadcastCardType { get; }
+    Type BegCardType { get; }
+    Type FatigueCardType { get; }
 
 
 }

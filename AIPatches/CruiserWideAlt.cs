@@ -16,7 +16,7 @@ public static class WideCruiserAltPatch {
 	private static bool PickNextIntent_Prefix(WideCruiserAlt __instance, ref EnemyDecision __result, State s, Combat c, Ship ownShip) {
 		if (s.GetDifficulty() < Manifest.Difficulty2) return true;
 		
-		MissileType missileType = ((s.GetHarderEnemies() && __instance.aiCounter > 3) ? MissileType.heavy : MissileType.normal);
+		MissileType missileType = (s.GetHarderEnemies() && __instance.aiCounter > 3) ? MissileType.heavy : MissileType.normal;
 		__result = AIUtils.MoveSet(__instance.aiCounter++, () => new EnemyDecision
 		{
 			actions = AIUtils.MoveToAimAtPincer(s, ownShip, s.ship, 2, 2),

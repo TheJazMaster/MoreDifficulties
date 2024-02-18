@@ -1,44 +1,22 @@
-using HarmonyLib;
 using Microsoft.Extensions.Logging;
-using Nanoray.Shrike.Harmony;
-using Nanoray.Shrike;
-using TheJazMaster.MoreDifficulties.Cards;
-using System.Collections.Generic;
-using System;
-using System.Linq;
-using System.Reflection.Emit;
-using System.Reflection;
-using System.Text;
 
 namespace TheJazMaster.MoreDifficulties;
 
-/*
-Dizzy: Stun Shot, Boost Capacitors
-Riggs: Evade Shot, Quick Thinking
-Peri: Wave Charge, Feint
-Isaac: Shift Shot, Shield Drone
-Drake: Explosive Slug, Hot Compress
-Max: Reroute, Shuffle Shot
-Books: Meteor, Mining Drill
-Cat: Jack of all Trades, CAT.EXE
-
-Eddie: Interference, Power Cell
-Riggs?:
-Dave:
-Nola:
-Isabelle:
-Ilya:
-Phillip:
-Tucker: 
-*/
 
 internal class AltStarters
 {
 	internal Manifest Instance => Manifest.Instance;
 
+	internal static readonly string AltStartersKey = "AltStarters";
+
+	internal static string Key(Deck deck)
+	{
+		return AltStartersKey + deck.Key();
+	}
+
 	internal bool AreAltStartersEnabled(State state, Deck deck)
 	{
-		return Instance.KokoroApi.TryGetExtensionData<bool>(state, deck.Key(), out var on) && on;
+		return Instance.KokoroApi.TryGetExtensionData<bool>(state, Key(deck), out var on) && on;
 	}
 
 	internal bool HasAltStarters(Deck deck)
@@ -48,7 +26,7 @@ internal class AltStarters
 
 	internal void SetAltStarters(State state, Deck deck, bool on)
 	{
-		Instance.KokoroApi.SetExtensionData(state, deck.Key(), on);
+		Instance.KokoroApi.SetExtensionData(state, Key(deck), on);
 	}
 
 	internal void RegisterAltStarters(Deck deck, StarterDeck starterDeck)
