@@ -18,9 +18,10 @@ internal static class CharacterPatches
 
 	private static void Character_Render_Postfix(Character __instance, G g, int x, int y, bool flipX, bool mini, bool? isSelected, bool autoFocus, UIKey rightHint, UIKey leftHint, UIKey downHint, UIKey upHint, bool renderLocked, bool canFocus, bool showTooltips)
 	{
-		RenderBoxes(__instance, g, x, y, flipX, mini, isSelected, autoFocus, rightHint, leftHint, downHint, upHint);
+		Instance.KokoroApi.TryGetExtensionData<RunSummaryRoute>(__instance, "runSummaryRoute", out var runSummaryRoute);
+		RenderBoxes(__instance, g, x, y, flipX, mini, isSelected, autoFocus, rightHint, leftHint, downHint, upHint, runSummaryRoute);
 		RenderTooltips(__instance, g, mini, renderLocked, canFocus, showTooltips);
-		RenderLockAndBan(__instance, g, x, y, mini, isSelected, autoFocus, rightHint, leftHint, downHint, upHint);
+		RenderLockAndBan(__instance, g, x, y, mini, isSelected, autoFocus, rightHint, leftHint, downHint, upHint, runSummaryRoute);
 	}
 
 	private static void RenderTooltips(Character character, G g, bool mini, bool renderLocked, bool canFocus, bool showTooltips)
@@ -38,11 +39,10 @@ internal static class CharacterPatches
 			g.tooltips.AddText(g.tooltips.pos, Loc.T(I18n.altStartersDescLoc, I18n.altStartersDescLocEn));
 	}
 
-	private static void RenderBoxes(Character character, G g, int x, int y, bool flipX, bool mini, bool? isSelected, bool autoFocus, UIKey rightHint, UIKey leftHint, UIKey downHint, UIKey upHint)
+	private static void RenderBoxes(Character character, G g, int x, int y, bool flipX, bool mini, bool? isSelected, bool autoFocus, UIKey rightHint, UIKey leftHint, UIKey downHint, UIKey upHint, RunSummaryRoute? runSummaryRoute)
 	{
 		if (!mini || character.deckType is not { } deck || g.state.route is not { } route || !Instance.AltStarters.HasAltStarters(character.deckType.Value)) return;
 
-		Instance.KokoroApi.TryGetExtensionData<RunSummaryRoute>(character, "runSummaryRoute", out var runSummaryRoute);
 		bool altStartersEnabled = runSummaryRoute != null && Instance.KokoroApi.TryGetExtensionData<bool>(runSummaryRoute.runSummary, AltStarters.Key(deck), out var altOn) ? 
 			altOn : Instance.AltStarters.AreAltStartersEnabled(g.state, character.deckType.Value);
 		Spr sprite = altStartersEnabled ? (Spr)Manifest.AltStartersMarker.Id! : (Spr)Manifest.AltStartersMarkerOff.Id!;
@@ -58,11 +58,11 @@ internal static class CharacterPatches
 		g.Pop();
 	}
 
-	private static void RenderLockAndBan(Character character, G g, int x, int y, bool mini, bool? isSelected, bool autoFocus, UIKey rightHint, UIKey leftHint, UIKey downHint, UIKey upHint)
+	private static void RenderLockAndBan(Character character, G g, int x, int y, bool mini, bool? isSelected, bool autoFocus, UIKey rightHint, UIKey leftHint, UIKey downHint, UIKey upHint, RunSummaryRoute? runSummaryRoute)
 	{
 		var deckType = character.deckType;
 
-		if (!mini || character.deckType is not { } deck || g.state.route is not NewRunOptions) return;
+		if (!mini || character.deckType is not { } deck || g.state.route is not NewRunOptions || runSummaryRoute != null) return;
 
 		if (Instance.LockAndBan.IsLocked(g.state, deck)) {
 			Spr sprite = (Spr)Manifest.LockBorder.Id!;
