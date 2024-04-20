@@ -16,12 +16,17 @@ internal class AltStarters
 
 	internal bool AreAltStartersEnabled(State state, Deck deck)
 	{
-		return Instance.KokoroApi.TryGetExtensionData<bool>(state, Key(deck), out var on) && on;
+		return HasAltStarters(deck) && Instance.KokoroApi.TryGetExtensionData<bool>(state, Key(deck), out var on) && on;
 	}
 
 	internal bool HasAltStarters(Deck deck)
 	{
 		return altStarters.ContainsKey(deck);
+	}
+
+	internal StarterDeck? GetAltStarters(Deck deck)
+	{
+		return altStarters.GetValueOrDefault(deck);
 	}
 
 	internal void SetAltStarters(State state, Deck deck, bool on)
@@ -99,6 +104,15 @@ internal class AltStarters
 				cards = {
 					new MiningDrillCard(),
 					new MeteorCard()
+				}
+			}
+		},
+		{
+			Deck.colorless,
+			new StarterDeck() {
+				cards = {
+					new DefensiveMode(),
+					new ColorlessCATSummon()
 				}
 			}
 		},

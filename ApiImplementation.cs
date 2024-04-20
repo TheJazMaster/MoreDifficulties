@@ -1,4 +1,3 @@
-using CobaltCoreModding.Definitions.ExternalItems;
 using TheJazMaster.MoreDifficulties.Cards;
 
 namespace TheJazMaster.MoreDifficulties;
@@ -12,6 +11,8 @@ public sealed class ApiImplementation : IMoreDifficultiesApi
 		=> Instance.AltStarters.RegisterAltStarters(deck, starterDeck);
 	public bool HasAltStarters(Deck deck)
 		=> Instance.AltStarters.HasAltStarters(deck);
+	public StarterDeck? GetAltStarters(Deck deck)
+		=> Instance.AltStarters.GetAltStarters(deck);
 	public bool AreAltStartersEnabled(State state, Deck deck)
 		=> Instance.AltStarters.AreAltStartersEnabled(state, deck);
 

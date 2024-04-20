@@ -42,11 +42,12 @@ internal static class StatePatches
         );
 	}
 
-	private static IEnumerable<CodeInstruction> State_PopulateRun_Delegate_Transpiler(IEnumerable<CodeInstruction> instructions, MethodBase originalMethod)
+	private static IEnumerable<CodeInstruction> State_PopulateRun_Delegate_Transpiler(IEnumerable<CodeInstruction> instructions, MethodBase originalMethod, ILGenerator il)
 	{
 		try
 		{
-			return new SequenceBlockMatcher<CodeInstruction>(instructions)
+			Label label = il.DefineLabel();
+			var h = new SequenceBlockMatcher<CodeInstruction>(instructions)
 				.Find(
 					ILMatches.Ldarg(0),
 					ILMatches.Instruction(OpCodes.Ldfld),
@@ -60,6 +61,35 @@ internal static class StatePatches
 				.Encompass(SequenceMatcherEncompassDirection.Before, 1)
 				.Replace(new CodeInstruction(OpCodes.Brfalse, branchTarget))
 
+				.Find(SequenceBlockMatcherFindOccurence.First, SequenceMatcherRelativeBounds.WholeSequence,
+					ILMatches.Ldloc<List<Card>>(originalMethod),
+					ILMatches.Call("Shuffle"),
+					ILMatches.LdcI4(2),
+					ILMatches.Call("Take"),
+					ILMatches.Call("ToList"),
+					ILMatches.Stloc<List<Card>>(originalMethod).Anchor(out var anchor)
+				)
+				.EncompassUntil(SequenceMatcherPastBoundsDirection.After, 
+					ILMatches.Call("SendCardToDeck")
+				)
+				.EncompassUntil(SequenceMatcherPastBoundsDirection.After, 
+					ILMatches.Call("SendCardToDeck")
+				)
+				.PointerMatcher(SequenceMatcherRelativeElement.AfterLast)
+				.AddLabel(label)
+				.PointerMatcher(SequenceMatcherRelativeElement.AfterLast);
+
+			CodeInstruction LdFldInstruction = h.Element();
+				
+			return h.Anchors()
+				.PointerMatcher(anchor)
+				.Insert(SequenceMatcherPastBoundsDirection.After, SequenceMatcherInsertionResultingBounds.IncludingInsertion, new List<CodeInstruction> {
+					new(OpCodes.Ldarg_0),
+					new(OpCodes.Ldfld, LdFldInstruction.operand),
+					new(OpCodes.Call, AccessTools.DeclaredMethod(typeof(StatePatches), nameof(ShouldCancelCatExeCards))),
+					new(OpCodes.Brtrue, label)
+				})
+
 				.AllElements();
 		}
 		catch (Exception ex)
@@ -67,6 +97,10 @@ internal static class StatePatches
 			Instance.Logger!.LogError("Could not patch method {Method} - {Mod} probably won't work.\nReason: {Exception}", originalMethod, Instance.Name, ex);
 			return instructions;
 		}
+	}
+
+	private static bool ShouldCancelCatExeCards(State state) {
+		return Instance.AltStarters.AreAltStartersEnabled(state, Deck.colorless);
 	}
 
     private static void State_PopulateRun_Postfix(State __instance, int difficulty) {

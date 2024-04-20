@@ -1,11 +1,10 @@
-using CobaltCoreModding.Definitions.ExternalItems;
-
 namespace TheJazMaster.MoreDifficulties;
 
 public interface IMoreDifficultiesApi
 {
 	void RegisterAltStarters(Deck deck, StarterDeck starterDeck);
     bool HasAltStarters(Deck deck);
+	public StarterDeck? GetAltStarters(Deck deck);
     bool AreAltStartersEnabled(State state, Deck deck);
 
 	bool IsBanned(State state, Deck deck);
