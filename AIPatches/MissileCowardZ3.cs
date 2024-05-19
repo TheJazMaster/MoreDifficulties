@@ -27,7 +27,7 @@ public static class MissileCowardZ3Patch {
 		{
 			__result = AIUtils.MoveSet(s.rngAi, () => new EnemyDecision
 			{
-				actions = AIHelpers.MoveToAimAt(s, ownShip, s.ship, 0),
+				actions = AIHelpers.MoveToAimAt(s, ownShip, s.ship, "wing1"),
 				intents = new List<Intent>
 				{
 					new IntentAttack
@@ -56,7 +56,7 @@ public static class MissileCowardZ3Patch {
 		}
 		__result = AIUtils.MoveSet(s.rngAi, () => new EnemyDecision
 		{
-			actions = AIHelpers.MoveToAimAt(s, ownShip, s.ship, 2),
+			actions = AIHelpers.MoveToAimAt(s, ownShip, s.ship, "cockpit"),
 			intents = new List<Intent>
 			{
 				new IntentAttack

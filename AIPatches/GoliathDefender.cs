@@ -13,12 +13,11 @@ Avoids mines
 public static class GoliathDefenderPatch {
 	private static Manifest Instance => Manifest.Instance;
 
-	public static List<CardAction> MoveToAimAtAvoidingMines(State s, Ship movingShip, Ship targetShip, int alignPartLocalX, int mineAvoidPartLocalX, int? backupAlignPartLocalX = null)
+	public static List<CardAction> MoveToAimAtAvoidingMines(State s, Ship movingShip, Ship targetShip, string key, string mineAvoidKey, string? backupKey = null)
 	{
 		bool avoidedMine = false;
 		Route route = s.route;
-		Combat? c = route as Combat;
-		if (c == null)
+		if (route is not Combat c)
 		{
 			return new List<CardAction>();
 		}
@@ -31,13 +30,13 @@ public static class GoliathDefenderPatch {
 		}
 		StuffBase? value;
 		var list = (from pair in targetShip.parts.Select((Part part, int x) => new
-			{
-				part = part,
-				x = x,
-				drone = (c.stuff.TryGetValue(x + targetShip.x, out value) ? value : null)
-			})
-			where pair.part.type != PType.empty
-			select pair).ToList();
+		{
+			part,
+			x,
+			drone = c.stuff.TryGetValue(x + targetShip.x, out value) ? value : null
+		})
+					where pair.part.type != PType.empty
+					select pair).ToList();
 		var list2 = list.Where(pair =>
 		{
 			if (pair.drone == null)
@@ -52,7 +51,7 @@ public static class GoliathDefenderPatch {
 			{
 				return false;
 			}
-			return (!(pair.drone is SpaceMine)) ? true : false;
+			return pair.drone is not SpaceMine;
 		}).ToList();
 		if (list2.Count > 0)
 		{
@@ -60,9 +59,15 @@ public static class GoliathDefenderPatch {
 		}
 		list.Shuffle(s.rngAi);
 		var anon = list[0];
+		Part? part = movingShip.parts.Find(part => part.key == key);
+		int alignPartLocalX = part != null ? movingShip.parts.IndexOf(part) : 0;
+		Part? mineAvoidPart = movingShip.parts.Find(part => part.key == mineAvoidKey);
+		int mineAvoidPartLocalX = mineAvoidPart != null ? movingShip.parts.IndexOf(mineAvoidPart) : 0;
+		Part? backupPart = movingShip.parts.Find(part => part.key == backupKey);
+		int? backupAlignPartLocalX = backupKey == null ? null : (backupPart != null ? movingShip.parts.IndexOf(backupPart) : 0);
 		foreach (var data in list) {
 			anon = data;
-			if (!c.stuff.TryGetValue(data.x + targetShip.x + (mineAvoidPartLocalX - alignPartLocalX), out value) || !(value is SpaceMine)) {
+			if (!c.stuff.TryGetValue(data.x + targetShip.x + (mineAvoidPartLocalX - alignPartLocalX), out value) || value is not SpaceMine) {
 				avoidedMine = true;
 				break;
 			}
@@ -91,7 +96,7 @@ public static class GoliathDefenderPatch {
 		}
 		__result = AIUtils.MoveSet(__instance.aiCounter++, () => new EnemyDecision
 		{
-			actions = MoveToAimAtAvoidingMines(s, ownShip, s.ship, 3, 4, 1),
+			actions = MoveToAimAtAvoidingMines(s, ownShip, s.ship, "cannon2", "missiles", "cannon1"),
 			intents = new List<Intent>
 			{
 				new IntentAttack
@@ -112,7 +117,7 @@ public static class GoliathDefenderPatch {
 			}
 		}, () => new EnemyDecision
 		{
-			actions = MoveToAimAtAvoidingMines(s, ownShip, s.ship, 1, 3),
+			actions = MoveToAimAtAvoidingMines(s, ownShip, s.ship, "cannon1", "missiles"),
 			intents = new List<Intent>
 			{
 				new IntentAttack

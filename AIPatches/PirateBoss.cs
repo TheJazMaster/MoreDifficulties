@@ -78,10 +78,6 @@ public static class PirateBossPatch {
 					moveDir = s.ship.x + s.ship.parts.Count / 2 + 1 - (ownShip.x + ownShip.parts.Count / 2);
 					foreach (Intent item in list)
 					{
-						// if (item is IntentMissile intentMissile)
-						// {
-						// 	intentMissile.missileType = MissileType.heavy;
-						// }
 						if (item is IntentAttack intentAttack)
 						{
 							intentAttack.damage++;

@@ -20,7 +20,7 @@ public static class CrabGuyPatch {
 		{
 			__result = AIUtils.MoveSet(0, () => new EnemyDecision
 			{
-				actions = AIHelpers.MoveToAimAt(s, ownShip, s.ship, 2, 99, movesFast: true, null, avoidAsteroids: false, avoidMines: false),
+				actions = AIHelpers.MoveToAimAt(s, ownShip, s.ship, "cannon1", 99, movesFast: true, null, avoidAsteroids: false, avoidMines: false),
 				intents = new List<Intent>
 				{
 					new IntentSpawn
@@ -56,7 +56,7 @@ public static class CrabGuyPatch {
 				{
 					new AMove
 					{
-						dir = (left ? (-5) : 5),
+						dir = left ? (-5) : 5,
 						targetPlayer = false
 					}
 				},
@@ -64,7 +64,7 @@ public static class CrabGuyPatch {
 				{
 					new IntentMissile
 					{
-						fromX = ((!left) ? 1 : 4),
+						fromX = (!left) ? 1 : 4,
 						missileType = MissileType.seeker,
 						bubbleShield = bubbledSeekers
 					}
@@ -74,7 +74,7 @@ public static class CrabGuyPatch {
 		}
 		__result = AIUtils.MoveSet(__instance.aiCounter++, () => new EnemyDecision
 		{
-			actions = AIHelpers.MoveToAimAt(s, ownShip, s.ship, 1, 99, movesFast: true, null, avoidAsteroids: false, avoidMines: false),
+			actions = AIHelpers.MoveToAimAt(s, ownShip, s.ship, "missiles1", 99, movesFast: true, null, avoidAsteroids: false, avoidMines: false),
 			intents = new List<Intent>
 			{
 				new IntentSpawn
@@ -100,7 +100,7 @@ public static class CrabGuyPatch {
 			}
 		}, () => new EnemyDecision
 		{
-			actions = AIHelpers.MoveToAimAt(s, ownShip, s.ship, 2, 99, movesFast: true, null, avoidAsteroids: false, avoidMines: false),
+			actions = AIHelpers.MoveToAimAt(s, ownShip, s.ship, "cannon1", 99, movesFast: true, null, avoidAsteroids: false, avoidMines: false),
 			intents = new List<Intent>
 			{
 				new IntentAttack

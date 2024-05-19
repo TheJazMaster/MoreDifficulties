@@ -39,11 +39,11 @@ public static class MediumAncientPatch {
 	[HarmonyPatch(typeof(AAttack), nameof(AAttack.Begin))]
 	[HarmonyPrefix]
 	private static void Begin_Prefix(AAttack __instance, G g, State s, Combat c) {
-		Ship ship = (__instance.targetPlayer ? s.ship : c.otherShip);
+		Ship ship = __instance.targetPlayer ? s.ship : c.otherShip;
 		var targetPlayer = __instance.targetPlayer;
 
 		int? num = GetFromX(__instance, s, c);
-		RaycastResult? raycastResult = (__instance.fromDroneX.HasValue ? CombatUtils.RaycastGlobal(c, ship, fromDrone: true, __instance.fromDroneX.Value) : (num.HasValue ? CombatUtils.RaycastFromShipLocal(s, c, num.Value, targetPlayer) : null));
+		RaycastResult? raycastResult = __instance.fromDroneX.HasValue ? CombatUtils.RaycastGlobal(c, ship, fromDrone: true, __instance.fromDroneX.Value) : (num.HasValue ? CombatUtils.RaycastFromShipLocal(s, c, num.Value, targetPlayer) : null);
 		if (raycastResult != null && !__instance.isBeam)
 		{
 			if (!raycastResult.hitShip && !raycastResult.hitDrone) {

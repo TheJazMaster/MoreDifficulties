@@ -19,7 +19,7 @@ public static class WideCruiserAltPatch {
 		MissileType missileType = (s.GetHarderEnemies() && __instance.aiCounter > 3) ? MissileType.heavy : MissileType.normal;
 		__result = AIUtils.MoveSet(__instance.aiCounter++, () => new EnemyDecision
 		{
-			actions = AIUtils.MoveToAimAtPincer(s, ownShip, s.ship, 2, 2),
+			actions = AIUtils.MoveToAimAtPincer(s, ownShip, s.ship, "cannonMidL", 2),
 			intents = new List<Intent>
 			{
 				new IntentMissile
@@ -43,7 +43,7 @@ public static class WideCruiserAltPatch {
 			}
 		}, () => new EnemyDecision
 		{
-			actions = AIUtils.MoveToAimAtPincer(s, ownShip, s.ship, 3, 2),
+			actions = AIUtils.MoveToAimAtPincer(s, ownShip, s.ship, "cannonInnerL", 2),
 			intents = new List<Intent>
 			{
 				new IntentMissile
@@ -69,7 +69,7 @@ public static class WideCruiserAltPatch {
 			}
 		}, () => new EnemyDecision
 		{
-			actions = AIHelpers.MoveToAimAt(s, ownShip, s.ship, 3),
+			actions = AIHelpers.MoveToAimAt(s, ownShip, s.ship, "cannonInnerL"),
 			intents = new List<Intent>
 			{
 				new IntentMissile

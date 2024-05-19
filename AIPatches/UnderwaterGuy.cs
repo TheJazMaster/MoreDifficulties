@@ -18,7 +18,7 @@ public static class UnderwaterGuyPatch {
 		
 		__result = AIUtils.MoveSet(__instance.aiCounter++, () => new EnemyDecision
 		{
-			actions = AIUtils.MoveToAimAtPincer(s, ownShip, s.ship, 1, 1),
+			actions = AIUtils.MoveToAimAtPincer(s, ownShip, s.ship, "empty1", 1),
 			intents = new List<Intent>
 			{
 				new IntentAttack
@@ -38,7 +38,7 @@ public static class UnderwaterGuyPatch {
 			}
 		}, () => new EnemyDecision
 		{
-			actions = AIUtils.MoveToAimAtPincer(s, ownShip, s.ship, 5, 1, true),
+			actions = AIUtils.MoveToAimAtPincer(s, ownShip, s.ship, "empty2", 1, true),
 			intents = new List<Intent>
 			{
 				new IntentAttack

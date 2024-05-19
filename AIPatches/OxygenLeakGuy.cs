@@ -10,7 +10,7 @@ using static System.Reflection.BindingFlags;
 namespace TheJazMaster.MoreDifficulties.AIPatches;
 
 /*
-	Fires breachers every 3 turns
+	Armored missile bay
 */
 
 [HarmonyPatch]

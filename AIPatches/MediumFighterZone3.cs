@@ -17,7 +17,7 @@ public static class MediumFighterZone3Patch {
 
 		__result = AIUtils.MoveSet(__instance.aiCounter++, () => new EnemyDecision
 		{
-			actions = AIHelpers.MoveToAimAt(s, ownShip, s.ship, 2),
+			actions = AIHelpers.MoveToAimAt(s, ownShip, s.ship, "cannon1"),
 			intents = new List<Intent>
 			{
 				new IntentAttack
@@ -40,7 +40,7 @@ public static class MediumFighterZone3Patch {
 			}
 		}, () => new EnemyDecision
 		{
-			actions = AIHelpers.MoveToAimAt(s, ownShip, s.ship, 2),
+			actions = AIHelpers.MoveToAimAt(s, ownShip, s.ship, "cannon1"),
 			intents = new List<Intent>
 			{
 				new IntentGiveCard

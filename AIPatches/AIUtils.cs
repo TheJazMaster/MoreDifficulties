@@ -17,7 +17,7 @@ public class AIUtils {
 		return generators.GetModulo(rngSource.NextInt())();
 	}
 
-	public static List<CardAction> MoveToAimAtPincer(State s, Ship movingShip, Ship targetShip, int alignPartLocalX, int maxLocalXFromEdge = 99, bool rightEdge = false, int maxMove = 99, bool movesFast = false, bool? attackWeakPoints = null, bool avoidAsteroids = false, bool avoidMines = true)
+	public static List<CardAction> MoveToAimAtPincer(State s, Ship movingShip, Ship targetShip, String key, int maxLocalXFromEdge = 99, bool rightEdge = false, int maxMove = 99, bool movesFast = false, bool? attackWeakPoints = null, bool avoidAsteroids = false, bool avoidMines = true)
 	{
 		Ship targetShip2 = targetShip;
 		Route route = s.route;
@@ -39,7 +39,7 @@ public class AIUtils {
 			{
 				part = part,
 				x = x,
-				drone = (c.stuff.TryGetValue(x + targetShip2.x, out value) ? value : null)
+				drone = c.stuff.TryGetValue(x + targetShip2.x, out value) ? value : null
 			})
 			where pair.part.type != PType.empty && (!rightEdge && pair.x <= cutoff || rightEdge && pair.x >= cutoff)
 			select pair).ToList();
@@ -84,6 +84,8 @@ public class AIUtils {
 			}
 		}
 		var anon = list.Random(s.rngAi);
+		Part? part = movingShip.parts.Find(part => part.key == key);
+		int alignPartLocalX = part != null ? movingShip.parts.IndexOf(part) : 0;
 		int num = targetShip2.x + anon.x - (movingShip.x + alignPartLocalX);
 		if (Math.Abs(num) > maxMove)
 		{
