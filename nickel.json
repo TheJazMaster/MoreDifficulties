@@ -18,10 +18,10 @@
   "ModType": "Nickel.Legacy",
   "UpdateChecks": {
 		"NexusMods": {
-			"ID": 1
+			"ID": 15
 		},
 		"GitHub": {
-			"Repository": "Shockah/Nickel"
+			"Repository": "TheJazMaster/MoreDifficulties"
 		}
 	}
 }
