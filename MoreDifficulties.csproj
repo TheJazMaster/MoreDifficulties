@@ -9,7 +9,6 @@
     <ModLoaderPath>$(HOME)\Games\Nickel</ModLoaderPath>
 		<ModZipPath>$(MSBuildProjectDirectory)\.release\$(MSBuildProjectName)-$(Version).zip</ModZipPath>
     <!-- <ModLoaderPath>..\..</ModLoaderPath> -->
-    <Version>1.4.2</Version>
     <GameDllPath>$(ModLoaderPath)\Extract\CobaltCore.dll</GameDllPath>
     <EnableDllExtract>false</EnableDllExtract>
   </PropertyGroup>
@@ -41,5 +40,13 @@
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
   </ItemGroup>
+
+  <Target Name="PublicizeGameDll" AfterTargets="ResolveReferences">
+      <Fayti1703.AssemblyTasks.PublishAllTypes SourceFilePath="$(GameDllPath)" TargetFilePath="$(IntermediateOutputPath)/CobaltCore.dll" />
+      <ItemGroup>
+          <ReferencePath Remove="$(GameDllPath)" />
+          <ReferencePath Include="$(IntermediateOutputPath)/CobaltCore.dll" />
+      </ItemGroup>
+  </Target>
 
 </Project>

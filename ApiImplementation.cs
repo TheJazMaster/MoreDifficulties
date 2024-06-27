@@ -7,6 +7,13 @@ public sealed class ApiImplementation : IMoreDifficultiesApi
 	private static Manifest Instance => Manifest.Instance;
 
 
+	public void DisableCharacterExtrasRendering() {
+		CharacterPatches.skipRenderingCharacterExtras = true;
+	}
+	public void ReenableCharacterExtrasRendering() {
+		CharacterPatches.skipRenderingCharacterExtras = false;
+	}
+
 	public void RegisterAltStarters(Deck deck, StarterDeck starterDeck)
 		=> Instance.AltStarters.RegisterAltStarters(deck, starterDeck);
 	public bool HasAltStarters(Deck deck)

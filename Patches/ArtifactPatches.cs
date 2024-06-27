@@ -22,11 +22,6 @@ internal static class ArtifactPatches
             original: typeof(Artifact).GetMethod("OnPlayerDeckShuffle", AccessTools.all),
             postfix: new HarmonyMethod(typeof(ArtifactPatches).GetMethod("Artifact_OnPlayerDeckShuffle_Postfix", AccessTools.all))
         );
-        harmony.TryPatch(
-            logger: Instance.Logger!,
-            original: typeof(InitialBooster).GetMethod("ModifyBaseDamage", AccessTools.all),
-            postfix: new HarmonyMethod(typeof(ArtifactPatches).GetMethod("InitialBooster_ModifyBaseDamage_Postfix", AccessTools.all))
-        );
 	}
 
     private static void Artifact_OnPlayerDeckShuffle_Postfix(Artifact __instance, State state, Combat combat) {
@@ -42,13 +37,6 @@ internal static class ArtifactPatches
                 card = new Fatigue(),
 				artifactPulse = __instance.Key()
             });
-    }
-
-    private static void InitialBooster_ModifyBaseDamage_Postfix(ref int __result, int baseDamage, Card? card, State state, Combat? combat, bool fromPlayer) {
-		if (fromPlayer && card != null && card is BasicOffences)
-		{
-            __result += 1;
-		}
     }
 
 	private static void Artifact_GetLocName_Postfix(Artifact __instance, ref string __result)

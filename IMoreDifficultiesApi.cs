@@ -20,4 +20,6 @@ public interface IMoreDifficultiesApi
     Type FatigueCardType { get; }
 
 
+	void DisableCharacterExtrasRendering();
+	void ReenableCharacterExtrasRendering();
 }

@@ -25,7 +25,7 @@ public static class PirateBossPatch {
 	public static bool PickNextIntent_Prefix(PirateBoss __instance, ref EnemyDecision __result, State s, Combat c, Ship ownShip) {
 		if (s.GetDifficulty() < Manifest.Difficulty2) return true;
 		
-		int moveDir = (__instance.PlayerIsLeftishOfBoss(s, c, ownShip) ? (__instance.moveDistance * -1) : __instance.moveDistance);
+		int moveDir = __instance.PlayerIsLeftishOfBoss(s, c, ownShip) ? (__instance.moveDistance * -1) : __instance.moveDistance;
 		__result = AIUtils.MoveSet(__instance.aiCounter++, delegate
 		{
 			List<Intent> list = new List<Intent>();
