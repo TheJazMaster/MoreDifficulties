@@ -45,7 +45,7 @@ internal static class CharacterPatches
 
 	private static void RenderBoxes(Character character, G g, int x, int y, bool flipX, bool mini, bool? isSelected, bool autoFocus, UIKey rightHint, UIKey leftHint, UIKey downHint, UIKey upHint, RunSummaryRoute? runSummaryRoute, UIKey? overrideKey)
 	{
-		if (!mini || skipRenderingCharacterExtras || character.deckType is not { } deck || g.state.route is not { } route || !(IsInRunOptionsScreen(g) || IsInRunSummaryScreen(g)) || !Instance.AltStarters.HasAltStarters(character.deckType.Value)) return;
+		if (!mini || skipRenderingCharacterExtras || character.deckType is not { } deck || g.state.route is not { } route || !(IsInRunOptionsScreen(g) || IsInRunSummaryScreen(g) || AreCockpitPanelsShown(g)) || !Instance.AltStarters.HasAltStarters(character.deckType.Value)) return;
 
 		bool altStartersEnabled = runSummaryRoute != null && Instance.KokoroApi.TryGetExtensionData<bool>(runSummaryRoute.runSummary, AltStarters.Key(deck), out var altOn) ? 
 			altOn : Instance.AltStarters.AreAltStartersEnabled(g.state, deck);
@@ -116,6 +116,10 @@ internal static class CharacterPatches
 
 	private static bool IsInRunOptionsScreen(G g) {
 		return g.state.route is NewRunOptions && g.metaRoute == null && !IsInRunSummaryScreen(g);
+	}
+
+	private static bool AreCockpitPanelsShown(G g) {
+		return g.metaRoute == null && (g.state.routeOverride ?? g.state.route).GetShowOverworldPanels();
 	}
 
 	// Close enough?
