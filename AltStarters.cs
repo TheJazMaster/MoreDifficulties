@@ -76,7 +76,7 @@ internal class AltStarters
 			new StarterDeck() {
 				cards = {
 					new ShiftShot(),
-					new ShieldDroneCard()
+					new SmallBoulder()
 				}
 			}
 		},
