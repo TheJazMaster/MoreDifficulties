@@ -1,9 +1,9 @@
 ﻿using FSPRO;
 using HarmonyLib;
 using Microsoft.Extensions.Logging;
-using Mono.CompilerServices.SymbolWriter;
 using Nanoray.Shrike;
 using Nanoray.Shrike.Harmony;
+using Nickel;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -20,6 +20,7 @@ internal static class NewRunOptionsPatches
 	private static Manifest Instance => Manifest.Instance;
 
 	private static OnMouseDownRightHandler OnMouseDownRightHandler = null!;
+	private static OnMouseDownRightShipHandler OnMouseDownRightShipHandler = null!;
 
 	private static readonly Lazy<Func<Rect>> DifficultyPosGetter = new(() => AccessTools.DeclaredField(typeof(NewRunOptions), "difficultyPos").EmitStaticGetter<Rect>());
 	private static readonly Lazy<Action<Rect>> DifficultyPosSetter = new(() => AccessTools.DeclaredField(typeof(NewRunOptions), "difficultyPos").EmitStaticSetter<Rect>());
@@ -29,6 +30,7 @@ internal static class NewRunOptionsPatches
 	public static void Apply(Harmony harmony)
 	{
 		OnMouseDownRightHandler = new OnMouseDownRightHandler();
+		OnMouseDownRightShipHandler = new OnMouseDownRightShipHandler();
 
 		harmony.TryPatch(
 			logger: Instance.Logger!,
@@ -72,11 +74,11 @@ internal static class NewRunOptionsPatches
 			original: typeof(NewRunOptions).GetMethod("CharSelect", AccessTools.all),
 			postfix: new HarmonyMethod(typeof(NewRunOptionsPatches).GetMethod("NewRunOptions_CharSelect_Postfix", AccessTools.all))
 		);
-		// harmony.TryPatch(
-		// 	logger: Instance.Logger!,
-		// 	original: typeof(NewRunOptions).GetMethod("Render", AccessTools.all),
-		// 	postfix: new HarmonyMethod(typeof(NewRunOptionsPatches).GetMethod("NewRunOptions_Render_Postfix", AccessTools.all))
-		// );
+		harmony.TryPatch(
+			logger: Instance.Logger!,
+			original: typeof(NewRunOptions).GetMethod("Render", AccessTools.all),
+			postfix: new HarmonyMethod(typeof(NewRunOptionsPatches).GetMethod("NewRunOptions_Render_Postfix", AccessTools.all))
+		);
 		
         NewRunOptions.difficulties.Insert(Manifest.Difficulty1, new NewRunOptions.DifficultyLevel
 		{
@@ -104,8 +106,7 @@ internal static class NewRunOptionsPatches
 		difficultyPos.y -= (NewRunOptions.difficulties.Count - 4) * (10 - MarginReduction);
 		DifficultyPosSetter.Value(difficultyPos);
 	}
-	// ADD RUN HISTORY REMEMBERING ALT STARTERS
-	// ALSO THEY'RE LIKE 38x38
+	
 	private static IEnumerable<CodeInstruction> NewRunOptions_EnsureRunConfigIsGood_Transpiler(IEnumerable<CodeInstruction> instructions, MethodBase originalMethod)
 	{
 		try
@@ -136,8 +137,7 @@ internal static class NewRunOptionsPatches
 		int? num = b.key?.ValueFor(UK.char_mini);
 		if (num.HasValue)
 		{
-			int valueOrDefault = num.GetValueOrDefault();
-			Deck deck = (Deck)valueOrDefault;
+			Deck deck = (Deck)num.Value;
 			if (runConfig.selectedChars.Contains(deck)) {
 				if (Instance.LockAndBan.IsBanned(g.state, deck))
 					Instance.LockAndBan.SetBan(g.state, deck, false);
@@ -145,6 +145,20 @@ internal static class NewRunOptionsPatches
 				if (Instance.LockAndBan.IsLocked(g.state, deck))
 					Instance.LockAndBan.SetLock(g.state, deck, false);
 			}
+		}
+	}
+
+	static string oldSelectedShip = "";
+	private static void ValidateShips(G g, NewRunOptions newRunOptions) {
+		string selectedShip = g.state.runConfig.selectedShip;
+		if (selectedShip != oldSelectedShip)
+		{
+			if (Instance.ShipLockAndBan.IsBanned(g.state, selectedShip))
+				Instance.ShipLockAndBan.SetBan(g.state, selectedShip, false);
+			foreach (string ship in StarterShip.ships.Keys)
+				Instance.ShipLockAndBan.SetLock(g.state, ship, false);
+
+			oldSelectedShip = selectedShip;
 		}
 	}
 
@@ -212,7 +226,7 @@ internal static class NewRunOptionsPatches
 		}
 	}
 
-	private static void NewRunOptions_Randomize_Postfix(State s, Rand rng)
+	private static void NewRunOptions_Randomize_Postfix(State s, Rand rng, NewRunOptions __instance)
 	{
 		ClearAlts(s);
 		foreach (Deck character in s.runConfig.selectedChars) {
@@ -220,6 +234,17 @@ internal static class NewRunOptionsPatches
 				Instance.AltStarters.SetAltStarters(s, character, rng.Next() >= 0.5);
 			}
 		}
+		HashSet<string> unlocked = s.storyVars.GetUnlockedShips();
+		string? ship = s.runConfig.GetSelectionState().Item1.Where((KeyValuePair<string, StarterShip> kvp) => 
+			unlocked.Contains(kvp.Key) && Manifest.Instance.ShipLockAndBan.IsLocked(s, kvp.Key)).ToList().FirstOrNull()?.Key;
+		
+		__instance.shipAnim = 10;
+		if (ship == null) {
+			__instance.shipAnim = 0;
+			ship = s.runConfig.GetSelectionState().Item1.Where((KeyValuePair<string, StarterShip> kvp) => 
+				unlocked.Contains(kvp.Key) && !Manifest.Instance.ShipLockAndBan.IsBanned(s, kvp.Key)).ToList().Random(rng).Key;
+		}
+		s.runConfig.selectedShip = ship;
 	}
 
 	private static bool ToggleAltEnabled(G g, Deck deck)
@@ -312,74 +337,86 @@ internal static class NewRunOptionsPatches
 				continue;
 
 			box.onMouseDownRight = OnMouseDownRightHandler;
+			box.onInputPhase = OnMouseDownRightHandler;
 		}
 	}
 
-	// private static void NewRunOptions_Render_Postfix(G g)
-	// {
-	// 	// Rect rect = default(Rect) + new Vec(404, 210);
-	// 	// Draw.Text(Loc.T(I18n.altStartersLoc, I18n.altStartersLocEn), rect.x + 16, rect.y, null, Colors.buttonBoxNormal);
-	// 	// ButtonResult checkBox = CheckboxBig(onMouseDown: Input.gamepadIsActiveInput ? null : MouseListener, noHover: Input.gamepadIsActiveInput, g: g, localV: new Vec(0, 0), key: new UIKey(StableUK.card, 1), isSelected: Instance.AltStarters.AreAltStartersEnabled(), textColor: null, boxColor: Colors.buttonBoxNormal);
-	// 	// if (checkBox.isHover)
-	// 	// {
-	// 	// 	g.tooltips.Add(checkBox.v - new Vec(110, 25), new TTText(Loc.T(I18n.altStartersDescLoc, I18n.altStartersDescLocEn)));
-	// 	// }
+	private static void NewRunOptions_Render_Postfix(NewRunOptions __instance, G g)
+	{
+		UIKey key;
+		foreach (string ship in g.state.storyVars.GetUnlockedShips())
+		{
+			key = new UIKey(Manifest.Instance.EssentialsApi.ShipSelectionUiKey, 0, ship);
+			if (g.boxes.FirstOrDefault(b => b.key == key) is not { } box)
+				continue;
+			
+			box.onMouseDownRight = OnMouseDownRightShipHandler;
+			box.onInputPhase = OnMouseDownRightShipHandler;
 
-	// 	Rect rect = new(10.0, 92.0);
-	// 	g.Push(null, rect);
-	// 	int ix = 0;
-	// 	int iy = 0;
-	// 	foreach (Deck deck in NewRunOptions.allChars)
-	// 	{
-	// 		rect = new Rect(34 * ix, 32 * iy);
-	// 		Vec xy = g.Push(null, rect).rect.xy;
-	// 		if (Instance.AltStarters.AreAltStartersEnabled(deck))
-	// 		{
-	// 			double x = xy.x + 26.0;
-	// 			double y = xy.y + 2.0;
-	// 			Color? boxColor = DB.decks[deck].color;
-	// 			Draw.Sprite((Spr)Manifest.AltStartersMarker.Id!, x, y, flipX: false, flipY: false, 0.0, null, null, null, null, boxColor);
-	// 		}
-	// 		g.Pop();
-	// 	}
-	// }
+			if (Instance.ShipLockAndBan.IsLocked(g.state, ship)) {
+				Spr sprite = (Spr)Manifest.ShipLockIcon.Id!;
 
-	// private static void NewRunOptions_Render_Postfix(G g)
-	// {
-	// 	// Rect rect = default(Rect) + new Vec(404, 210);
-	// 	// Draw.Text(Loc.T(I18n.altStartersLoc, I18n.altStartersLocEn), rect.x + 16, rect.y, null, Colors.buttonBoxNormal);
-	// 	// ButtonResult checkBox = CheckboxBig(onMouseDown: Input.gamepadIsActiveInput ? null : MouseListener, noHover: Input.gamepadIsActiveInput, g: g, localV: new Vec(0, 0), key: new UIKey(StableUK.card, 1), isSelected: Instance.AltStarters.AreAltStartersEnabled(), textColor: null, boxColor: Colors.buttonBoxNormal);
-	// 	// if (checkBox.isHover)
-	// 	// {
-	// 	// 	g.tooltips.Add(checkBox.v - new Vec(110, 25), new TTText(Loc.T(I18n.altStartersDescLoc, I18n.altStartersDescLocEn)));
-	// 	// }
+				Rect rect = new(box.rect.x + 71, box.rect.y + 1, 35, 33);
+				
+				UIKey uiKey = new(Manifest.Instance.EssentialsApi.ShipSelectionUiKey, 0, "lock" + ship);
+				
+				Box newBox = g.Push(uiKey, rect, null, false, noHoverSound: false, gamepadUntargetable: false, ReticleMode.Quad, null, null, null, null, 0, null, null, null, null);
+				Vec pos = newBox.rect.xy;
 
-	// 	Rect rect = new(10.0, 92.0);
-	// 	g.Push(null, rect);
-	// 	int ix = 0;
-	// 	int iy = 0;
-	// 	foreach (Deck deck in NewRunOptions.allChars)
-	// 	{
-	// 		rect = new Rect(34 * ix, 32 * iy);
-	// 		Vec xy = g.Push(null, rect).rect.xy;
-	// 		if (Instance.AltStarters.AreAltStartersEnabled(deck))
-	// 		{
-	// 			double x = xy.x + 26.0;
-	// 			double y = xy.y + 2.0;
-	// 			Color? boxColor = DB.decks[deck].color;
-	// 			Draw.Sprite((Spr)Manifest.AltStartersMarker.Id!, x, y, flipX: false, flipY: false, 0.0, null, null, null, null, boxColor);
-	// 		}
-	// 		g.Pop();
-	// 	}
+				Draw.Sprite(sprite, pos.x, pos.y, flipX: false, flipY: false, 0.0, null, null, null, new Rect(0, 0, 33, 33), Colors.buttonBoxNormal);
+
+				g.Pop();
+			}
+			if (Instance.ShipLockAndBan.IsBanned(g.state, ship)) {
+				Spr sprite = (Spr)Manifest.ShipBanIcon.Id!;
+				bool isHover = box.IsHover();
+
+				Rect rect = new(box.rect.x + 71, box.rect.y + (isHover ? 1 : 0), 35, 33);
+				
+				UIKey uiKey = new(Manifest.Instance.EssentialsApi.ShipSelectionUiKey, 0, "ban" + ship);
+				
+				Box newBox = g.Push(uiKey, rect, null, false, noHoverSound: false, gamepadUntargetable: false, ReticleMode.Quad, null, null, null, null, 0, null, null, null, null);
+				Vec pos = newBox.rect.xy;
+
+				Draw.Sprite(sprite, pos.x, pos.y, flipX: false, flipY: false, 0.0, null, null, null, new Rect(0, 0, 33, 33), isHover ? Colors.buttonBoxNormal : Colors.menuHighlightBox);
+
+				g.Pop();
+			}
+		}
+		ValidateShips(g, __instance);
 
 
-	// 	g.Pop();
-	// }
+		key = new UIKey(Manifest.Instance.EssentialsApi.ShipSelectionToggleUiKey);
+		var selectionState = g.state.runConfig.GetSelectionState();
+		if (g.boxes.FirstOrDefault(b => b.key == key) is not { } box2 || selectionState.Item1[selectionState.Item3].Key != g.state.runConfig.selectedShip)
+			return;
+
+		box2.onMouseDownRight = OnMouseDownRightShipHandler;
+		box2.onInputPhase = OnMouseDownRightShipHandler;
+
+		string selectedShip = g.state.runConfig.selectedShip;
+		if (Instance.ShipLockAndBan.IsLocked(g.state, selectedShip)) {
+			Spr sprite = (Spr)Manifest.ShipLockIcon.Id!;
+			bool isHover = box2.IsHover() || g.boxes.Exists(b => b.key?.k == Manifest.Instance.EssentialsApi.ShipSelectionUiKey);
+
+			Rect rect = new(box2.rect.x + 85, box2.rect.y + (isHover ? 1 : 0), 35, 33);
+			
+			UIKey uiKey = new(Manifest.Instance.EssentialsApi.ShipSelectionToggleUiKey, 0, "toggleButtonLock");
+			
+			Box newBox = g.Push(uiKey, rect, null, false, noHoverSound: false, gamepadUntargetable: false, ReticleMode.Quad, null, null, null, null, 0, null, null, null, null);
+			Vec pos = newBox.rect.xy;
+
+			Draw.Sprite(sprite, pos.x, pos.y, flipX: false, flipY: false, 0.0, null, null, null, new Rect(0, 0, 33, 33), isHover ? Colors.buttonBoxNormal : Colors.menuHighlightBox);
+
+			g.Pop();
+		}
+	}
 }
 
-sealed class OnMouseDownRightHandler : OnMouseDownRight
+sealed class OnMouseDownRightHandler : OnMouseDownRight, OnInputPhase
 {
 	internal static LockAndBan LockAndBan => Manifest.Instance.LockAndBan;
+
 	public void OnMouseDownRight(G g, Box b)
 	{
 		int? num = b.key?.ValueFor(UK.char_mini);
@@ -389,16 +426,106 @@ sealed class OnMouseDownRightHandler : OnMouseDownRight
 			RunConfig runConfig = s.runConfig;
 			Deck deck = (Deck)num.GetValueOrDefault();
 
-			if (runConfig.selectedChars.Contains(deck))
+			if (runConfig.selectedChars.Contains(deck)) {
+				ToggleLock(s, deck);
+			}
+			else {
+				ToggleBan(s, deck);
+			}
+		}
+	}
+
+	public void OnInputPhase(G g, Box b)
+	{
+		if (!Input.GetGpDown(Btn.B))
+			return;
+
+		int? num = b.key?.ValueFor(UK.char_mini);
+		if (num.HasValue)
+		{
+			State s = g.state;
+			RunConfig runConfig = s.runConfig;
+			Deck deck = (Deck)num.GetValueOrDefault();
+
+			if (runConfig.selectedChars.Contains(deck)) {
+				ToggleLock(s, deck);
+			}
+			else {
+				ToggleBan(s, deck);
+			}
+		}
+	}
+
+	static void ToggleLock(State state, Deck deck) {
+		Audio.Play(Event.Click);
+		LockAndBan.SetLock(state, deck, !LockAndBan.IsLocked(state, deck));
+	}
+	static void ToggleBan(State state, Deck deck) {
+		Audio.Play(Event.Click);
+		LockAndBan.SetBan(state, deck, !LockAndBan.IsBanned(state, deck));
+	}
+}
+
+sealed class OnMouseDownRightShipHandler : OnMouseDownRight, OnInputPhase
+{
+	internal static ShipLockAndBan LockAndBan => Manifest.Instance.ShipLockAndBan;
+
+	public void OnMouseDownRight(G g, Box b)
+	{
+		string? str = b.key?.StringFor(Manifest.Instance.EssentialsApi.ShipSelectionUiKey);
+		if (str != null) {
+			State s = g.state;
+			RunConfig runConfig = s.runConfig;
+			string key = str;
+
+			if (runConfig.selectedShip == key) {
+				ToggleShipLock(s, key);
+			}
+			else {
+				ToggleShipBan(s, key);
+			}
+		}
+		if (b.key?.k == Manifest.Instance.EssentialsApi.ShipSelectionToggleUiKey) {
+			State s = g.state;
+			RunConfig runConfig = s.runConfig;
+
+			ToggleShipLock(s, s.runConfig.selectedShip);
+		}
+	}
+
+	public void OnInputPhase(G g, Box b)
+	{
+		if (!Input.GetGpDown(Btn.B))
+			return;
+
+		if (b.key?.k == Manifest.Instance.EssentialsApi.ShipSelectionToggleUiKey) {
+			State s = g.state;
+
+			ToggleShipLock(s, s.runConfig.selectedShip);
+		}
+		string? str = b.key?.StringFor(Manifest.Instance.EssentialsApi.ShipSelectionUiKey);
+		if (str != null) {
+			State s = g.state;
+			RunConfig runConfig = s.runConfig;
+			string key = str;
+
+			if (runConfig.selectedShip == key)
 			{
-				Audio.Play(Event.Click);
-				LockAndBan.SetLock(g.state, deck, !LockAndBan.IsLocked(s, deck));
+				ToggleShipLock(s, key);
 			}
 			else
 			{
-				Audio.Play(Event.Click);
-				LockAndBan.SetBan(g.state, deck, !LockAndBan.IsBanned(s, deck));
+				ToggleShipBan(s, key);
 			}
 		}
+	}
+	
+	static void ToggleShipLock(State state, string key) {
+		Audio.Play(Event.Click);
+		LockAndBan.SetLock(state, key, !LockAndBan.IsLocked(state, key));
+	}
+	static void ToggleShipBan(State state, string key) {
+		Audio.Play(Event.Click);
+		LockAndBan.SetBan(state, key, !LockAndBan.IsBanned(state, key));
 	}
 }

@@ -23,9 +23,11 @@ public class Manifest : ISpriteManifest, IModManifest, ICardManifest, IStatusMan
     internal static ApiImplementation Api { get; private set; } = null!;
 
     internal IKokoroApi KokoroApi { get; private set; } = null!;
+    internal IEssentialsApi EssentialsApi { get; private set; } = null!;
 
     internal AltStarters AltStarters { get; private set; } = null!;
     internal LockAndBan LockAndBan { get; private set; } = null!;
+    internal ShipLockAndBan ShipLockAndBan { get; private set; } = null!;
 
     public IEnumerable<DependencyEntry> Dependencies => Array.Empty<DependencyEntry>();
 
@@ -44,6 +46,8 @@ public class Manifest : ISpriteManifest, IModManifest, ICardManifest, IStatusMan
     public static ExternalSprite LockBorder { get; private set; } = null!;
     public static ExternalSprite BanBorder { get; private set; } = null!;
     public static ExternalSprite BanBorderAlt { get; private set; } = null!;
+    public static ExternalSprite ShipLockIcon { get; private set; } = null!;
+    public static ExternalSprite ShipBanIcon { get; private set; } = null!;
 
     public static ExternalSprite GrazerStatusIcon { get; private set; } = null!;
     public static ExternalStatus GrazerStatus { get; private set; } = null!;
@@ -120,6 +124,8 @@ public class Manifest : ISpriteManifest, IModManifest, ICardManifest, IStatusMan
         LockBorder = RegisterSprite(registry, "LockBorder", Path.Combine(ModRootFolder.FullName, "Sprites", Path.GetFileName("lockBorder.png")));
         BanBorder = RegisterSprite(registry, "BanBorder", Path.Combine(ModRootFolder.FullName, "Sprites", Path.GetFileName("banBorder.png")));
         BanBorderAlt = RegisterSprite(registry, "BanBorderAlt", Path.Combine(ModRootFolder.FullName, "Sprites", Path.GetFileName("banBorderAlt.png")));
+        ShipLockIcon = RegisterSprite(registry, "ShipLockIcon", Path.Combine(ModRootFolder.FullName, "Sprites", Path.GetFileName("lockShip.png")));
+        ShipBanIcon = RegisterSprite(registry, "ShipBanIcon", Path.Combine(ModRootFolder.FullName, "Sprites", Path.GetFileName("banShip.png")));
     }
 
     void ICardManifest.LoadManifest(ICardRegistry registry)
@@ -148,6 +154,7 @@ public class Manifest : ISpriteManifest, IModManifest, ICardManifest, IStatusMan
 		ReflectionExt.CurrentAssemblyLoadContext.LoadFromAssemblyPath(Path.Combine(ModRootFolder!.FullName, "Shrike.dll"));
 		ReflectionExt.CurrentAssemblyLoadContext.LoadFromAssemblyPath(Path.Combine(ModRootFolder!.FullName, "Shrike.Harmony.dll"));
 
+        EssentialsApi = contact.GetApi<IEssentialsApi>("Nickel.Essentials")!;
         KokoroApi = contact.GetApi<IKokoroApi>("Shockah.Kokoro")!;
         KokoroApi.RegisterTypeForExtensionData(typeof(State));
         KokoroApi.RegisterTypeForExtensionData(typeof(RunSummary));
@@ -162,6 +169,7 @@ public class Manifest : ISpriteManifest, IModManifest, ICardManifest, IStatusMan
 
         AltStarters = new AltStarters();
         LockAndBan = new LockAndBan();
+        ShipLockAndBan = new ShipLockAndBan();
 		ArtifactPatches.Apply(harmony);
 		HardmodePatches.Apply(harmony);
 		CombatPatches.Apply(harmony);
