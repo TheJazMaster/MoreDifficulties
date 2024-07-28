@@ -134,7 +134,7 @@ internal static class NewRunOptionsPatches
 	private static void NewRunOptions_OnMouseDown_Postfix(G g, Box b)
 	{
 		RunConfig runConfig = g.state.runConfig;
-		int? num = b.key?.ValueFor(UK.char_mini);
+		int? num = b.key?.ValueFor(StableUK.char_mini);
 		if (num.HasValue)
 		{
 			Deck deck = (Deck)num.Value;
@@ -419,7 +419,7 @@ sealed class OnMouseDownRightHandler : OnMouseDownRight, OnInputPhase
 
 	public void OnMouseDownRight(G g, Box b)
 	{
-		int? num = b.key?.ValueFor(UK.char_mini);
+		int? num = b.key?.ValueFor(StableUK.char_mini);
 		if (num.HasValue)
 		{
 			State s = g.state;
@@ -437,10 +437,12 @@ sealed class OnMouseDownRightHandler : OnMouseDownRight, OnInputPhase
 
 	public void OnInputPhase(G g, Box b)
 	{
+		if (b.key != g.hoverKey)
+			return;
 		if (!Input.GetGpDown(Btn.B))
 			return;
 
-		int? num = b.key?.ValueFor(UK.char_mini);
+		int? num = b.key?.ValueFor(StableUK.char_mini);
 		if (num.HasValue)
 		{
 			State s = g.state;
@@ -495,6 +497,8 @@ sealed class OnMouseDownRightShipHandler : OnMouseDownRight, OnInputPhase
 
 	public void OnInputPhase(G g, Box b)
 	{
+		if (b.key != g.hoverKey)
+			return;
 		if (!Input.GetGpDown(Btn.B))
 			return;
 

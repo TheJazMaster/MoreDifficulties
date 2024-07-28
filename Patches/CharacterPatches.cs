@@ -53,7 +53,7 @@ internal static class CharacterPatches
 		Spr sprite = altStartersEnabled ? (Spr)Manifest.AltStartersMarker.Id! : (Spr)Manifest.AltStartersMarkerOff.Id!;
 
 		Rect rect = new(x, y, 35, 33);
-		UK k = UK.char_mini; int v = (int)character.deckType.GetValueOrDefault(); string str = "altStartersBox";
+		UK k = StableUK.char_mini; int v = (int)character.deckType.GetValueOrDefault(); string str = "altStartersBox";
 		if (overrideKey.HasValue) {
 			k = overrideKey.Value.k;
 			v = overrideKey.Value.v;
@@ -80,7 +80,7 @@ internal static class CharacterPatches
 			Spr sprite = (Spr)Manifest.LockBorder.Id!;
 
 			Rect rect = new(x, y, 35 + x, 33 + y);
-			UK k = UK.char_mini; int v = (int)character.deckType.GetValueOrDefault(); string str = "lockBorder";
+			UK k = StableUK.char_mini; int v = (int)character.deckType.GetValueOrDefault(); string str = "lockBorder";
 			if (overrideKey.HasValue) {
 				k = overrideKey.Value.k;
 				v = overrideKey.Value.v;
@@ -99,7 +99,7 @@ internal static class CharacterPatches
 			Spr sprite = Manifest.Instance.AltStarters.HasAltStarters(deck) ? (Spr)Manifest.BanBorderAlt.Id! : (Spr)Manifest.BanBorder.Id!;
 
 			Rect rect = new(x, y, 35, 33);
-			UK k = UK.char_mini; int v = (int)character.deckType.GetValueOrDefault(); string str = "banBorder";
+			UK k = StableUK.char_mini; int v = (int)character.deckType.GetValueOrDefault(); string str = "banBorder";
 			if (overrideKey.HasValue) {
 				k = overrideKey.Value.k;
 				v = overrideKey.Value.v;
