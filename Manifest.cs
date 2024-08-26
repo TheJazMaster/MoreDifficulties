@@ -151,14 +151,9 @@ public class Manifest : ISpriteManifest, IModManifest, ICardManifest, IStatusMan
     public void BootMod(IModLoaderContact contact) {
 
         Instance = this;
-		ReflectionExt.CurrentAssemblyLoadContext.LoadFromAssemblyPath(Path.Combine(ModRootFolder!.FullName, "Shrike.dll"));
-		ReflectionExt.CurrentAssemblyLoadContext.LoadFromAssemblyPath(Path.Combine(ModRootFolder!.FullName, "Shrike.Harmony.dll"));
 
         EssentialsApi = contact.GetApi<IEssentialsApi>("Nickel.Essentials")!;
         KokoroApi = contact.GetApi<IKokoroApi>("Shockah.Kokoro")!;
-        KokoroApi.RegisterTypeForExtensionData(typeof(State));
-        KokoroApi.RegisterTypeForExtensionData(typeof(RunSummary));
-        KokoroApi.RegisterTypeForExtensionData(typeof(Character));
 
         Harmony harmony = new("MoreDifficulties");
         harmony.TryPatch(
@@ -174,6 +169,7 @@ public class Manifest : ISpriteManifest, IModManifest, ICardManifest, IStatusMan
 		HardmodePatches.Apply(harmony);
 		CombatPatches.Apply(harmony);
 		NewRunOptionsPatches.Apply(harmony);
+		DailyDescriptorPatches.Apply(harmony);
 		RunConfigPatches.Apply(harmony);
         RunSummaryPatches.Apply(harmony);
 		RunSummaryRoutePatches.Apply(harmony);

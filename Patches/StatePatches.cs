@@ -29,11 +29,12 @@ internal static class StatePatches
             original: typeof(State).GetMethod("PopulateRun", AccessTools.all),
             postfix: new HarmonyMethod(typeof(StatePatches).GetMethod("State_PopulateRun_Postfix", AccessTools.all))
         );
+        harmony.TryPatch(
+			logger: Instance.Logger!,
+            original: typeof(State).GetMethod("StartDailyRun", AccessTools.all),
+            prefix: new HarmonyMethod(typeof(StatePatches).GetMethod("State_StartDailyRun_Prefix", AccessTools.all))
+        );
 
-		// foreach (MemberInfo m in typeof(State).GetMembers().Where((MemberInfo m) => m.MemberType == MemberTypes.NestedType))
-		// 	foreach (MethodInfo me in (m as Type)!.GetMethods(AccessTools.all)) {
-		// 		Instance.Logger.LogInformation(m.Name + ": " + me.Name + " \t\t(" + Regex.Match(me.Name, ".*AddStartersForCharacter.*").Success +")");
-		// 	}
 		displayClass = (typeof(State).GetMembers().Where((MemberInfo m) => m.MemberType == MemberTypes.NestedType && (m as Type)!.GetMethods().Any((MethodInfo me) => Regex.Match(me.Name, ".*AddStartersForCharacter.*").Success)).First() as Type)!;
         harmony.TryPatch(
 			logger: Instance.Logger!,
@@ -46,50 +47,19 @@ internal static class StatePatches
 	{
 		try
 		{
-			Label label = il.DefineLabel();
-			var h = new SequenceBlockMatcher<CodeInstruction>(instructions)
+			return new SequenceBlockMatcher<CodeInstruction>(instructions)
 				.Find(
 					ILMatches.Ldarg(0),
-					ILMatches.Instruction(OpCodes.Ldfld),
-					ILMatches.LdcI4(1),
-					ILMatches.Blt
+					ILMatches.Ldfld("chars"),
+					ILMatches.LdcI4((int)Deck.colorless),
+					ILMatches.Call("Contains"),
+					ILMatches.Brfalse.GetBranchTarget(out var branch)
 				)
-
-				.PointerMatcher(SequenceMatcherRelativeElement.Last)
-				.GetBranchTarget(out var branchTarget)
-
-				.Encompass(SequenceMatcherEncompassDirection.Before, 1)
-				.Replace(new CodeInstruction(OpCodes.Brfalse, branchTarget))
-
-				.Find(SequenceBlockMatcherFindOccurence.First, SequenceMatcherRelativeBounds.WholeSequence,
-					ILMatches.Ldloc<List<Card>>(originalMethod),
-					ILMatches.Call("Shuffle"),
-					ILMatches.LdcI4(2),
-					ILMatches.Call("Take"),
-					ILMatches.Call("ToList"),
-					ILMatches.Stloc<List<Card>>(originalMethod).Anchor(out var anchor)
-				)
-				.EncompassUntil(SequenceMatcherPastBoundsDirection.After, 
-					ILMatches.Call("SendCardToDeck")
-				)
-				.EncompassUntil(SequenceMatcherPastBoundsDirection.After, 
-					ILMatches.Call("SendCardToDeck")
-				)
-				.PointerMatcher(SequenceMatcherRelativeElement.AfterLast)
-				.AddLabel(label)
-				.PointerMatcher(SequenceMatcherRelativeElement.AfterLast);
-
-			CodeInstruction LdFldInstruction = h.Element();
-				
-			return h.Anchors()
-				.PointerMatcher(anchor)
-				.Insert(SequenceMatcherPastBoundsDirection.After, SequenceMatcherInsertionResultingBounds.IncludingInsertion, new List<CodeInstruction> {
+				.Insert(SequenceMatcherPastBoundsDirection.After, SequenceMatcherInsertionResultingBounds.IncludingInsertion, [
 					new(OpCodes.Ldarg_0),
-					new(OpCodes.Ldfld, LdFldInstruction.operand),
-					new(OpCodes.Call, AccessTools.DeclaredMethod(typeof(StatePatches), nameof(ShouldCancelCatExeCards))),
-					new(OpCodes.Brtrue, label)
-				})
-
+					new(OpCodes.Call, typeof(StatePatches).GetMethod("ShouldCancelCatExeCards", AccessTools.all)),
+					new(OpCodes.Brtrue, branch.Value)
+				])
 				.AllElements();
 		}
 		catch (Exception ex)
@@ -139,6 +109,13 @@ internal static class StatePatches
             }
         }
     }
+
+	private static void State_StartDailyRun_Prefix(DailyDescriptor descriptor, State __instance) {
+		foreach (Deck character in descriptor.crew) {
+			bool altStarters = Manifest.Instance.KokoroApi.GetExtensionData<bool>(descriptor, DailyDescriptorPatches.Key(character));
+			Manifest.Instance.AltStarters.SetAltStarters(__instance, character, altStarters);
+		}
+	}
 
 	private static bool State_AddStartersForCharacter_Prefix(object __instance, Deck d)
 	{

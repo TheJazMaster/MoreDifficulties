@@ -153,8 +153,6 @@ internal static class NewRunOptionsPatches
 		string selectedShip = g.state.runConfig.selectedShip;
 		if (selectedShip != oldSelectedShip)
 		{
-			if (Instance.ShipLockAndBan.IsBanned(g.state, selectedShip))
-				Instance.ShipLockAndBan.SetBan(g.state, selectedShip, false);
 			foreach (string ship in StarterShip.ships.Keys)
 				Instance.ShipLockAndBan.SetLock(g.state, ship, false);
 
@@ -298,28 +296,33 @@ internal static class NewRunOptionsPatches
 		catch (Exception ex)
 		{
 			Instance.Logger!.LogError("Could not patch method {Method} - {Mod} probably won't work.\nReason: {Exception}", originalMethod, Instance.Name, ex);
-			return instructions;
+			return instructions;	
 		}
 	}
 
 	private static IEnumerable<CodeInstruction> NewRunOptions_Randomize_Transpiler(IEnumerable<CodeInstruction> instructions, MethodBase originalMethod)
 	{
-		return new SequenceBlockMatcher<CodeInstruction>(instructions)
-			.Find(
-				ILMatches.Ldarg(1).Anchor(out var anchor),
-				ILMatches.Ldfld("storyVars"),
-				ILMatches.AnyCall,
-				ILMatches.Ldarg(2),
-				ILMatches.Call("Shuffle"),
-				ILMatches.LdcI4(3)
-			)
-			.EncompassUntil(SequenceMatcherPastBoundsDirection.After, ILMatches.Call("ToHashSet"))
-			.Replace(new List<CodeInstruction>() {
-				new(OpCodes.Ldarg_1),
-				new(OpCodes.Ldarg_2),
-				new(OpCodes.Call, typeof(NewRunOptionsPatches).GetMethod("GetShuffledCharactersWithLocksAndBans", AccessTools.all))
-			})
-			.AllElements();
+		try {
+			return new SequenceBlockMatcher<CodeInstruction>(instructions)
+				.Find(
+					ILMatches.Ldarg(1).Anchor(out var anchor),
+					ILMatches.Call("get_storyVars"),
+					ILMatches.Call("GetUnlockedChars"),
+					ILMatches.Ldarg(2),
+					ILMatches.Call("Shuffle"),
+					ILMatches.LdcI4(3)
+				)
+				.EncompassUntil(SequenceMatcherPastBoundsDirection.After, ILMatches.Call("ToHashSet"))
+				.Replace(new List<CodeInstruction>() {
+					new(OpCodes.Ldarg_1),
+					new(OpCodes.Ldarg_2),
+					new(OpCodes.Call, typeof(NewRunOptionsPatches).GetMethod("GetShuffledCharactersWithLocksAndBans", AccessTools.all))
+				})
+				.AllElements();
+		} catch (Exception ex) {
+			Instance.Logger!.LogError("Could not patch method {Method} - {Mod} probably won't work.\nReason: {Exception}", originalMethod, Instance.Name, ex);
+			return instructions;
+		}
 	}
 
 	private static HashSet<Deck> GetShuffledCharactersWithLocksAndBans(State s, Rand rng)
@@ -492,6 +495,7 @@ sealed class OnMouseDownRightShipHandler : OnMouseDownRight, OnInputPhase
 			RunConfig runConfig = s.runConfig;
 
 			ToggleShipLock(s, s.runConfig.selectedShip);
+			LockAndBan.SetBan(s, s.runConfig.selectedShip, false);
 		}
 	}
 
