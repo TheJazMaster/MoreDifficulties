@@ -15,6 +15,8 @@ namespace TheJazMaster.MoreDifficulties;
 internal static class StatePatches
 {
 	private static Manifest Instance => Manifest.Instance;
+	private static IKokoroApi Kokoro => Instance.KokoroApi;
+	private static AltStarters AltStarters => Instance.AltStarters;
 
 	private static Type displayClass = null!;
 	public static void Apply(Harmony harmony)
@@ -31,8 +33,13 @@ internal static class StatePatches
         );
         harmony.TryPatch(
 			logger: Instance.Logger!,
-            original: typeof(State).GetMethod("StartDailyRun", AccessTools.all),
+            original: typeof(State).GetMethod("StartDailyRun", AccessTools.all, [typeof(DailyDescriptor)]),
             prefix: new HarmonyMethod(typeof(StatePatches).GetMethod("State_StartDailyRun_Prefix", AccessTools.all))
+        );
+        harmony.TryPatch(
+			logger: Instance.Logger!,
+            original: typeof(State).GetMethod("CleanupDailyRun", AccessTools.all),
+            postfix: new HarmonyMethod(typeof(StatePatches).GetMethod("State_CleanupDailyRun_Postfix", AccessTools.all))
         );
 
 		displayClass = (typeof(State).GetMembers().Where((MemberInfo m) => m.MemberType == MemberTypes.NestedType && (m as Type)!.GetMethods().Any((MethodInfo me) => Regex.Match(me.Name, ".*AddStartersForCharacter.*").Success)).First() as Type)!;
@@ -70,7 +77,7 @@ internal static class StatePatches
 	}
 
 	private static bool ShouldCancelCatExeCards(State state) {
-		return Instance.AltStarters.AreAltStartersEnabled(state, Deck.colorless);
+		return AltStarters.AreAltStartersEnabled(state, Deck.colorless);
 	}
 
     private static void State_PopulateRun_Postfix(State __instance, int difficulty) {
@@ -111,9 +118,24 @@ internal static class StatePatches
     }
 
 	private static void State_StartDailyRun_Prefix(DailyDescriptor descriptor, State __instance) {
+		foreach (Deck character in NewRunOptions.allChars) {
+			Kokoro.RemoveExtensionData(__instance, DailyDescriptorPatches.StorageKey(character));
+		}
 		foreach (Deck character in descriptor.crew) {
-			bool altStarters = Manifest.Instance.KokoroApi.GetExtensionData<bool>(descriptor, DailyDescriptorPatches.Key(character));
-			Manifest.Instance.AltStarters.SetAltStarters(__instance, character, altStarters);
+			// Store for when daily is over
+			Kokoro.SetExtensionData(__instance, DailyDescriptorPatches.StorageKey(character), AltStarters.AreAltStartersEnabled(__instance, character));
+
+			if (Manifest.Instance.KokoroApi.TryGetExtensionData(descriptor, DailyDescriptorPatches.Key(character), out bool altStarters))
+				AltStarters.SetAltStarters(__instance, character, altStarters);
+		}
+	}
+
+	private static void State_CleanupDailyRun_Postfix(State __instance) {
+		foreach (Deck character in NewRunOptions.allChars) {
+			if (Kokoro.TryGetExtensionData(__instance, DailyDescriptorPatches.StorageKey(character), out bool altStarters)) {
+				AltStarters.SetAltStarters(__instance, character, altStarters);
+				Kokoro.RemoveExtensionData(__instance, DailyDescriptorPatches.StorageKey(character));
+			}
 		}
 	}
 
@@ -121,9 +143,9 @@ internal static class StatePatches
 	{
 		FieldInfo stateField = displayClass.GetFields().Where((FieldInfo f) => f.FieldType == typeof(State)).First();
 		State state = (State) stateField!.GetValue(__instance)!;
-		if (Instance.AltStarters.AreAltStartersEnabled(state, d)) {
+		if (AltStarters.AreAltStartersEnabled(state, d)) {
 
-			if (!Instance.AltStarters.altStarters.TryGetValue(d, out var value))
+			if (!AltStarters.altStarters.TryGetValue(d, out var value))
 				StarterDeck.starterSets.TryGetValue(d, out value!);
 			
 			foreach (Card item4 in value.cards.Select((Card c) => c.CopyWithNewId()))

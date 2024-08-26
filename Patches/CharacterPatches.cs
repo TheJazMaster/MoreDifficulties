@@ -22,15 +22,21 @@ internal static class CharacterPatches
 
 	private static void Character_Render_Postfix(Character __instance, G g, int x, int y, bool flipX, bool mini, bool? isSelected, bool autoFocus, UIKey rightHint, UIKey leftHint, UIKey downHint, UIKey upHint, bool renderLocked, bool canFocus, bool showTooltips, UIKey? overrideKey = null)
 	{
+		if (__instance.deckType is not { } deck) return;
+
 		Instance.KokoroApi.TryGetExtensionData<RunSummaryRoute>(__instance, "runSummaryRoute", out var runSummaryRoute);
-		RenderBoxes(__instance, g, x, y, flipX, mini, isSelected, autoFocus, rightHint, leftHint, downHint, upHint, runSummaryRoute, overrideKey, renderLocked);
-		RenderTooltips(__instance, g, mini, renderLocked, canFocus, showTooltips, overrideKey);
-		RenderLockAndBan(__instance, g, x, y, mini, isSelected, autoFocus, rightHint, leftHint, downHint, upHint, runSummaryRoute, overrideKey, renderLocked);
+		bool altStartersEnabled = runSummaryRoute != null && Instance.KokoroApi.TryGetExtensionData<bool>(runSummaryRoute.runSummary, AltStarters.Key(deck), out var altOn) ? 
+			altOn : (g.state.route is NewRunOptions nro && nro.subRoute is DailyPreview preview && preview._descriptor != null && Instance.KokoroApi.TryGetExtensionData(preview._descriptor, DailyDescriptorPatches.Key(deck), out bool altOnFordaily) ?
+			altOnFordaily : Instance.AltStarters.AreAltStartersEnabled(g.state, deck));
+
+		RenderBoxes(__instance, g, altStartersEnabled, deck, x, y, flipX, mini, isSelected, autoFocus, rightHint, leftHint, downHint, upHint, runSummaryRoute, overrideKey, renderLocked);
+		RenderTooltips(__instance, g, altStartersEnabled, deck, mini, renderLocked, canFocus, showTooltips, overrideKey);
+		RenderLockAndBan(__instance, g, altStartersEnabled, deck, x, y, mini, isSelected, autoFocus, rightHint, leftHint, downHint, upHint, runSummaryRoute, overrideKey, renderLocked);
 	}
 
-	private static void RenderTooltips(Character character, G g, bool mini, bool renderLocked, bool canFocus, bool showTooltips, UIKey? overrideKey)
+	private static void RenderTooltips(Character character, G g, bool altStartersEnabled, Deck deck, bool mini, bool renderLocked, bool canFocus, bool showTooltips, UIKey? overrideKey)
 	{
-		if (!showTooltips || skipRenderingCharacterExtras || !canFocus || renderLocked || character.deckType is not { } deck)
+		if (!showTooltips || skipRenderingCharacterExtras || !canFocus || renderLocked)
 			return;
 		
 		var key = overrideKey != null ? overrideKey.Value : new UIKey(mini ? StableUK.char_mini : StableUK.character, (int)deck, character.type);
@@ -39,17 +45,15 @@ internal static class CharacterPatches
 		if (!box.IsHover())
 			return;
 
-		if (Instance.AltStarters.AreAltStartersEnabled(g.state, deck))
+		if (altStartersEnabled)
 			g.tooltips.AddText(g.tooltips.pos, Loc.T(I18n.altStartersDescLoc, I18n.altStartersDescLocEn));
 	}
 
-	private static void RenderBoxes(Character character, G g, int x, int y, bool flipX, bool mini, bool? isSelected, bool autoFocus, UIKey rightHint, UIKey leftHint, UIKey downHint, UIKey upHint, RunSummaryRoute? runSummaryRoute, UIKey? overrideKey, bool renderLocked)
+	private static void RenderBoxes(Character character, G g, bool altStartersEnabled, Deck deck, int x, int y, bool flipX, bool mini, bool? isSelected, bool autoFocus, UIKey rightHint, UIKey leftHint, UIKey downHint, UIKey upHint, RunSummaryRoute? runSummaryRoute, UIKey? overrideKey, bool renderLocked)
 	{
-		if (!mini || skipRenderingCharacterExtras || renderLocked || character.deckType is not { } deck || g.state.route is not { } route || !(IsInRunOptionsScreen(g) || IsInDailyScreen(g) || IsInRunSummaryScreen(g) || AreCockpitPanelsShown(g)) || !Instance.AltStarters.HasAltStarters(character.deckType.Value))
+		if (!mini || skipRenderingCharacterExtras || renderLocked || g.state.route is not { } route || !(IsInRunOptionsScreen(g) || IsInDailyScreen(g) || IsInRunSummaryScreen(g) || AreCockpitPanelsShown(g)) || !Instance.AltStarters.HasAltStarters(deck))
 			return;
 
-		bool altStartersEnabled = runSummaryRoute != null && Instance.KokoroApi.TryGetExtensionData<bool>(runSummaryRoute.runSummary, AltStarters.Key(deck), out var altOn) ? 
-			altOn : Instance.AltStarters.AreAltStartersEnabled(g.state, deck);
 		Spr sprite = altStartersEnabled ? (Spr)Manifest.AltStartersMarker.Id! : (Spr)Manifest.AltStartersMarkerOff.Id!;
 
 		Rect rect = new(x, y, 35, 33);
@@ -69,11 +73,11 @@ internal static class CharacterPatches
 		g.Pop();
 	}
 
-	private static void RenderLockAndBan(Character character, G g, int x, int y, bool mini, bool? isSelected, bool autoFocus, UIKey rightHint, UIKey leftHint, UIKey downHint, UIKey upHint, RunSummaryRoute? runSummaryRoute, UIKey? overrideKey, bool renderLocked)
+	private static void RenderLockAndBan(Character character, G g, bool altStartersEnabled, Deck deck, int x, int y, bool mini, bool? isSelected, bool autoFocus, UIKey rightHint, UIKey leftHint, UIKey downHint, UIKey upHint, RunSummaryRoute? runSummaryRoute, UIKey? overrideKey, bool renderLocked)
 	{
 		var deckType = character.deckType;
 
-		if (!mini || skipRenderingCharacterExtras || renderLocked || character.deckType is not { } deck || !IsInRunOptionsScreen(g) || runSummaryRoute != null)
+		if (!mini || skipRenderingCharacterExtras || renderLocked || !IsInRunOptionsScreen(g) || runSummaryRoute != null)
 			return;
 
 		if (Instance.LockAndBan.IsLocked(g.state, deck)) {
@@ -121,7 +125,7 @@ internal static class CharacterPatches
 	}
 
 	private static bool IsInDailyScreen(G g) {
-		return (g.state.route is DailyPreview || g.state.route is DailyLeaderboard) && g.metaRoute == null && !IsInRunSummaryScreen(g);
+		return (g.state.route is DailyPreview) && g.metaRoute == null && !IsInRunSummaryScreen(g);
 	}
 
 	private static bool AreCockpitPanelsShown(G g) {

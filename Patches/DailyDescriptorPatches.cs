@@ -21,6 +21,8 @@ internal static class DailyDescriptorPatches
 	private static Manifest Instance => Manifest.Instance;
 
 	private static readonly string AltStartersDailyKey = "AltStartersDaily";
+	private static readonly string AltStartersStorageKey = "AltStartersStorage";
+
 
 	public static void Apply(Harmony harmony)
 	{
@@ -68,6 +70,7 @@ internal static class DailyDescriptorPatches
 	}
 
 	internal static string Key(Deck deck) => AltStartersDailyKey + deck.Key();
+	internal static string StorageKey(Deck deck) => AltStartersStorageKey + deck.Key();
 
 	static List<Deck>? allCharsOld = null;
 	static Dictionary<string, StarterShip>? allShipsOld = null;
