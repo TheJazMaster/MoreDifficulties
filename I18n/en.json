@@ -1,0 +1,72 @@
+{
+    "action": {
+        "beg": {
+            "name": "Beg",
+            "description": "Instantly downgrade all <c=midrow>missiles in the midrow</c> into normal <c=drone>missiles</c>."
+        }
+    },
+    "status": {
+        "grazer": {
+            "name": "Grazer",
+            "description": "Every time this ship's attack misses the enemy by exactly 1 space, the enemy takes {0} damage."
+        }
+    },
+    "card": {
+        "BasicOffences": {
+            "name": "Basic Offences"
+        },
+        "BasicDefences": {
+            "name": "Basic Defences"
+        },
+        "BasicManeuvers": {
+            "name": "Basic Maneuvers"
+        },
+        "BasicBroadcast": {
+            "name": "Basic Broadcast"
+        },
+        "Beg": {
+            "name": "Beg"
+        },
+        "Fatigue": {
+            "name": "Fatigue"
+        }
+    },
+    "artifact": {
+        "easy": {
+            "name": "EASYMODE",
+            "description": "<c=artifact>EASY</c>: Gain <c=keyword>1</c> <c=status>temp shield</c> every turn."
+        },
+        "brutal": {
+            "name": "BRUTAL",
+            "description": "<c=artifact>BRUTAL</c>: Take a <c=downside>downside</c> on boot sequence\nEvents are harder\nStart combat with a <c=downside>BRITTLE</c> cockpit\nYour basic cards have worse upgrades\n+1 <c=card>Basic Shot</c>\n+1 <c=card>Corrupted Core</c>\nLess pre-upgraded card offerings\n-3 max hull\n1 less max hull gained from boss kills\nElites only offer 2 artifacts\nStart with 50% hull missing\nMost enemies are harder!\nShuffling your deck adds a <c=card>Fatigue</c> to your draw pile\nYou can no longer have more than 7 <c=status>EVADE</c> at a time."
+        },
+        "cosmic": {
+            "name": "COSMIC",
+            "description": "<c=artifact>COSMIC</c>: Take a <c=downside>downside</c> on boot sequence\nEvents are harder\nStart combat with a <c=downside>BRITTLE</c> cockpit\nYour basic cards have worse upgrades\n+1 <c=card>Basic Shot</c>\n+1 <c=card>Corrupted Core</c>\nLess pre-upgraded card offerings\n-3 max hull\n1 less max hull gained from boss kills\nElites only offer 2 artifacts\nStart with 50% hull missing\nShuffling your deck adds a <c=card>Fatigue</c> to your draw pile\nYou can no longer have more than 7 <c=status>EVADE</c> at a time\nAll enemies and bosses are EVEN HARDER!"
+        },
+
+        "HarderEnemies": {
+            "name": "HARDER ENEMIES",
+            "description": "Enemies are harder.\n\n<c=faint>Normally a part of Hardest difficulty.</c>"
+        },
+        "EvenHarderEnemies": {
+            "name": "EVEN HARDER ENEMIES",
+            "description": "Enemies in later zones are way harder.\n\n<c=faint>Normally a part of Cosmic difficulty.</c>"
+        },
+        "EvadeCap": {
+            "name": "EVADE CAP",
+            "description": "You can not have more than 7 <c=status>EVADE</c> at a time.\n\n<c=faint>Normally a part of Brutal difficulty.</c>"
+        },
+        "WorseBasics": {
+            "name": "WORSE BASICS",
+            "description": "Your starting Basic cards have worse upgrades.\n\n<c=faint>Normally a part of Brutal difficulty.</c>"
+        },
+        "TrashOnShuffle": {
+            "name": "FATIGUE",
+            "description": "Every time your discard pile is shuffled back into your draw pile, add a <c=card>Fatigue</c> to your draw pile.\n\n<c=faint>Normally a part of Brutal difficulty.</c>"
+        }
+    },
+    "settings": {
+        "customRunCategory": "More difficulty options"
+    }
+}
