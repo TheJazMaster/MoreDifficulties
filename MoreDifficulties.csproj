@@ -1,48 +1,19 @@
 <Project Sdk="Microsoft.NET.Sdk">
-
-  <PropertyGroup>
-    <TargetFramework>net8.0</TargetFramework>
-    <ImplicitUsings>enable</ImplicitUsings>
-    <Nullable>enable</Nullable>
-    <PlatformTarget>x64</PlatformTarget>
-    <IsLegacyMod>true</IsLegacyMod>
-    <ModLoaderPath>$(HOME)\Games\Nickel</ModLoaderPath>
+	<PropertyGroup>
+		<RootNamespace>TheJazMaster.MoreDifficulties</RootNamespace>
+		<IncludedModProjectPaths>I18n;Sprites</IncludedModProjectPaths>
+		<Nullable>enable</Nullable>
+		<TargetFramework>net8.0</TargetFramework>
 		<ModZipPath>$(MSBuildProjectDirectory)\.release\$(MSBuildProjectName)-$(Version).zip</ModZipPath>
-    <!-- <ModLoaderPath>..\..</ModLoaderPath> -->
-    <GameDllPath>$(ModLoaderPath)\Extract\CobaltCore.dll</GameDllPath>
-    <EnableDllExtract>false</EnableDllExtract>
-  </PropertyGroup>
 
-  <ItemGroup>
-    <Reference Include="CobaltCoreModding.Definitions">
-      <HintPath>References\CobaltCoreModding.Definitions.dll</HintPath>
-      <Private>False</Private>
-    </Reference>
+		<ModLoaderPath>..\..</ModLoaderPath>
+
+		<EnableDllExtract>true</EnableDllExtract>		
+		<GameExePath>/home/thejazmaster/.steam/steam/steamapps/common/Cobalt Core/CobaltCore.exe</GameExePath>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<PackageReference Include="Nickel.ModBuildConfig" Version="1.2.3"/>
+		<PackageReference Include="EnumByNameSourceGenerator" Version="1.1.1" PrivateAssets="All" ExcludeAssets="All" />
   </ItemGroup>
-
-  <ItemGroup>
-    <PackageReference Include="Nickel.ModBuildConfig" Version="1.2.3" PrivateAssets="All" ExcludeAssets="runtime" />
-    <PackageReference Include="EnumByNameSourceGenerator" Version="1.1.1" PrivateAssets="All" ExcludeAssets="runtime" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <None Update="LICENSE.txt">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Update="README.md">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Update="Sprites/**/*">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-  </ItemGroup>
-
-  <Target Name="PublicizeGameDll" AfterTargets="ResolveReferences">
-      <Fayti1703.AssemblyTasks.PublishAllTypes SourceFilePath="$(GameDllPath)" TargetFilePath="$(IntermediateOutputPath)/CobaltCore.dll" />
-      <ItemGroup>
-          <ReferencePath Remove="$(GameDllPath)" />
-          <ReferencePath Include="$(IntermediateOutputPath)/CobaltCore.dll" />
-      </ItemGroup>
-  </Target>
-
 </Project>

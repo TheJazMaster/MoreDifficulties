@@ -8,6 +8,7 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics.Metrics;
+using System.Linq;
 using System.Reflection;
 using System.Reflection.Emit;
 using System.Security.AccessControl;
@@ -17,7 +18,8 @@ namespace TheJazMaster.MoreDifficulties;
 
 internal static class NewRunOptionsPatches
 {
-	private static Manifest Instance => Manifest.Instance;
+	private static ModEntry Instance => ModEntry.Instance;
+	private static IModData ModData => Instance.Helper.ModData;
 
 	private static OnMouseDownRightHandler OnMouseDownRightHandler = null!;
 	private static OnMouseDownRightShipHandler OnMouseDownRightShipHandler = null!;
@@ -80,26 +82,26 @@ internal static class NewRunOptionsPatches
 			postfix: new HarmonyMethod(typeof(NewRunOptionsPatches).GetMethod("NewRunOptions_Render_Postfix", AccessTools.all))
 		);
 		
-        NewRunOptions.difficulties.Insert(Manifest.Difficulty1, new NewRunOptions.DifficultyLevel
+        NewRunOptions.difficulties.Insert(ModEntry.Difficulty1, new NewRunOptions.DifficultyLevel
 		{
 			uiKey = "difficulty_brutal",
 			locKey = I18n.difficultyLoc1,
-			color = NewRunOptions.GetDifficultyColor(Manifest.Difficulty1),
-			level = Manifest.Difficulty1
+			color = NewRunOptions.GetDifficultyColor(ModEntry.Difficulty1),
+			level = ModEntry.Difficulty1
 		});
-        NewRunOptions.difficulties.Insert(Manifest.Difficulty2, new NewRunOptions.DifficultyLevel
+        NewRunOptions.difficulties.Insert(ModEntry.Difficulty2, new NewRunOptions.DifficultyLevel
 		{
 			uiKey = "difficulty_cosmic",
 			locKey = I18n.difficultyLoc2,
-			color = NewRunOptions.GetDifficultyColor(Manifest.Difficulty2),
-			level = Manifest.Difficulty2
+			color = NewRunOptions.GetDifficultyColor(ModEntry.Difficulty2),
+			level = ModEntry.Difficulty2
 		});
 		NewRunOptions.difficulties.Insert(0, new NewRunOptions.DifficultyLevel
 		{
 			uiKey = "difficulty_easy",
 			locKey = "newRunOptions.difficultyEasy",
-			color = NewRunOptions.GetDifficultyColor(Manifest.Easy),
-			level = Manifest.Easy
+			color = NewRunOptions.GetDifficultyColor(ModEntry.Easy),
+			level = ModEntry.Easy
 		});
 
 		var difficultyPos = DifficultyPosGetter.Value();
@@ -126,7 +128,7 @@ internal static class NewRunOptionsPatches
 		}
 		catch (Exception ex)
 		{
-			Instance.Logger!.LogError("Could not patch method {Method} - {Mod} probably won't work.\nReason: {Exception}", originalMethod, Instance.Name, ex);
+			Instance.Logger!.LogError("Could not patch method {Method} - {Mod} probably won't work.\nReason: {Exception}", originalMethod, "MoreDifficulties", ex);
 			return instructions;
 		}
 	}
@@ -139,11 +141,11 @@ internal static class NewRunOptionsPatches
 		{
 			Deck deck = (Deck)num.Value;
 			if (runConfig.selectedChars.Contains(deck)) {
-				if (Instance.LockAndBan.IsBanned(g.state, deck))
-					Instance.LockAndBan.SetBan(g.state, deck, false);
+				if (LockAndBan.IsBanned(g.state, deck))
+					LockAndBan.SetBan(g.state, deck, false);
 			} else {
-				if (Instance.LockAndBan.IsLocked(g.state, deck))
-					Instance.LockAndBan.SetLock(g.state, deck, false);
+				if (LockAndBan.IsLocked(g.state, deck))
+					LockAndBan.SetLock(g.state, deck, false);
 			}
 		}
 	}
@@ -154,7 +156,7 @@ internal static class NewRunOptionsPatches
 		if (selectedShip != oldSelectedShip)
 		{
 			foreach (string ship in StarterShip.ships.Keys)
-				Instance.ShipLockAndBan.SetLock(g.state, ship, false);
+				ShipLockAndBan.SetLock(g.state, ship, false);
 
 			oldSelectedShip = selectedShip;
 		}
@@ -188,12 +190,12 @@ internal static class NewRunOptionsPatches
 			.EncompassUntil(SequenceMatcherPastBoundsDirection.After, ILMatches.Br.GetBranchTarget(out var end))
 			.Anchors()
 			.PointerMatcher(anchor)
-			.Insert(SequenceMatcherPastBoundsDirection.After, SequenceMatcherInsertionResultingBounds.IncludingInsertion, new List<CodeInstruction> {
+			.Insert(SequenceMatcherPastBoundsDirection.After, SequenceMatcherInsertionResultingBounds.IncludingInsertion, [
 				new(OpCodes.Ldarg_1),
 				ldLoc.Value,
 				new(OpCodes.Call, typeof(NewRunOptionsPatches).GetMethod("ToggleAltEnabled", AccessTools.all)),
 				new(OpCodes.Brfalse, end.Value)
-			})
+			])
 			.AllElements();
 	}
 
@@ -207,19 +209,19 @@ internal static class NewRunOptionsPatches
 	{
 		foreach((Deck deck, _) in DB.decks)
 		{
-			if (!Instance.LockAndBan.IsLocked(state, deck))
-				Instance.KokoroApi.RemoveExtensionData(state, AltStarters.Key(deck));
+			if (!LockAndBan.IsLocked(state, deck))
+				ModData.RemoveModData(state, AltStarters.Key(deck));
 		}
 	}
 	private static void ReselectLocks(State state)
 	{
 		// foreach((Deck deck, _) in DB.decks)
 		// {
-		// 	Instance.KokoroApi.RemoveExtensionData(state, LockAndBan.KeyLock(deck));
+		// 	ModData.RemoveModData(state, LockAndBan.KeyLock(deck));
 		// }
 		foreach((Deck deck, _) in DB.decks)
 		{
-			if (Instance.LockAndBan.IsLocked(state, deck))
+			if (LockAndBan.IsLocked(state, deck))
 				state.runConfig.selectedChars.Add(deck);
 		}
 	}
@@ -228,19 +230,19 @@ internal static class NewRunOptionsPatches
 	{
 		ClearAlts(s);
 		foreach (Deck character in s.runConfig.selectedChars) {
-			if (Instance.AltStarters.HasAltStarters(character) && !Instance.LockAndBan.IsLocked(s, character)) {
-				Instance.AltStarters.SetAltStarters(s, character, rng.Next() >= 0.5);
+			if (AltStarters.HasAltStarters(character) && !LockAndBan.IsLocked(s, character)) {
+				AltStarters.SetAltStarters(s, character, rng.Next() >= 0.5);
 			}
 		}
 		HashSet<string> unlocked = s.storyVars.GetUnlockedShips();
 		string? ship = s.runConfig.GetSelectionState().Item1.Where((KeyValuePair<string, StarterShip> kvp) => 
-			unlocked.Contains(kvp.Key) && Manifest.Instance.ShipLockAndBan.IsLocked(s, kvp.Key)).ToList().FirstOrNull()?.Key;
+			unlocked.Contains(kvp.Key) && ShipLockAndBan.IsLocked(s, kvp.Key)).ToList().FirstOrNull()?.Key;
 		
 		__instance.shipAnim = 10;
 		if (ship == null) {
 			__instance.shipAnim = 0;
 			ship = s.runConfig.GetSelectionState().Item1.Where((KeyValuePair<string, StarterShip> kvp) => 
-				unlocked.Contains(kvp.Key) && !Manifest.Instance.ShipLockAndBan.IsBanned(s, kvp.Key)).ToList().Random(rng).Key;
+				unlocked.Contains(kvp.Key) && !ShipLockAndBan.IsBanned(s, kvp.Key)).ToList().Random(rng).Key;
 		}
 		s.runConfig.selectedShip = ship;
 	}
@@ -248,28 +250,28 @@ internal static class NewRunOptionsPatches
 	private static bool ToggleAltEnabled(G g, Deck deck)
 	{
 		State state = g.state;
-		bool hasAltStarters = Instance.AltStarters.HasAltStarters(deck);
-		bool enabled = hasAltStarters && Instance.AltStarters.AreAltStartersEnabled(state, deck);
+		bool hasAltStarters = AltStarters.HasAltStarters(deck);
+		bool enabled = hasAltStarters && AltStarters.AreAltStartersEnabled(state, deck);
 		if (!enabled) Audio.Play(Event.Click);
-		Instance.AltStarters.SetAltStarters(state, deck, !enabled);
+		AltStarters.SetAltStarters(state, deck, !enabled);
 		return enabled || !hasAltStarters;
 	}
 
 	private static void NewRunOptions_GetDifficultyColor_Postfix(int level, ref Color __result)
 	{
-		if (level == Manifest.Easy)
+		if (level == ModEntry.Easy)
 			__result = Color.Lerp(Colors.textMain, Colors.midrow, Math.Abs(level) / 3.0);
 
-		if (level == Manifest.Difficulty1 || level == Manifest.Difficulty2)
+		if (level == ModEntry.Difficulty1 || level == ModEntry.Difficulty2)
 			__result = Color.Lerp(Colors.enemyName, new Color("ffa0a0"), (level-3) / 2.0);
 	}
 
 	private static void NewRunOptions_GetDifficultyColorLogbook_Postfix(int level, ref Color __result)
 	{
-		if (level == Manifest.Easy)
+		if (level == ModEntry.Easy)
 			__result = Color.Lerp(new Color(0.2, 0.3, 0.9), Colors.midrow, Math.Pow(Math.Abs(level) / 3.0, 2.0));
 
-		if (level == Manifest.Difficulty1 || level == Manifest.Difficulty2)
+		if (level == ModEntry.Difficulty1 || level == ModEntry.Difficulty2)
 			__result = Color.Lerp(Colors.enemyName, new Color("ffa0a0"), (level-3) / 2.0);
 	}
 
@@ -295,7 +297,7 @@ internal static class NewRunOptionsPatches
 		}
 		catch (Exception ex)
 		{
-			Instance.Logger!.LogError("Could not patch method {Method} - {Mod} probably won't work.\nReason: {Exception}", originalMethod, Instance.Name, ex);
+			Instance.Logger!.LogError("Could not patch method {Method} - {Mod} probably won't work.\nReason: {Exception}", originalMethod, "MoreDifficulties", ex);
 			return instructions;	
 		}
 	}
@@ -313,22 +315,22 @@ internal static class NewRunOptionsPatches
 					ILMatches.LdcI4(3)
 				)
 				.EncompassUntil(SequenceMatcherPastBoundsDirection.After, ILMatches.Call("ToHashSet"))
-				.Replace(new List<CodeInstruction>() {
+				.Replace([
 					new(OpCodes.Ldarg_1),
 					new(OpCodes.Ldarg_2),
 					new(OpCodes.Call, typeof(NewRunOptionsPatches).GetMethod("GetShuffledCharactersWithLocksAndBans", AccessTools.all))
-				})
+				])
 				.AllElements();
 		} catch (Exception ex) {
-			Instance.Logger!.LogError("Could not patch method {Method} - {Mod} probably won't work.\nReason: {Exception}", originalMethod, Instance.Name, ex);
+			Instance.Logger!.LogError("Could not patch method {Method} - {Mod} probably won't work.\nReason: {Exception}", originalMethod, "MoreDifficulties", ex);
 			return instructions;
 		}
 	}
 
 	private static HashSet<Deck> GetShuffledCharactersWithLocksAndBans(State s, Rand rng)
 	{
-		var locked = s.storyVars.GetUnlockedChars().Where(deck => Instance.LockAndBan.IsLocked(s, deck));
-		return locked.Concat(s.storyVars.GetUnlockedChars().Where(deck => !Instance.LockAndBan.IsBanned(s, deck) && !Instance.LockAndBan.IsLocked(s, deck)).Shuffle(rng).Take(Math.Max(0, 3-locked.Count()))).ToHashSet();
+		var locked = s.storyVars.GetUnlockedChars().Where(deck => LockAndBan.IsLocked(s, deck));
+		return locked.Concat(s.storyVars.GetUnlockedChars().Where(deck => !LockAndBan.IsBanned(s, deck) && !LockAndBan.IsLocked(s, deck)).Shuffle(rng).Take(Math.Max(0, 3-locked.Count()))).ToHashSet();
 	}
 
 	private static void NewRunOptions_CharSelect_Postfix(NewRunOptions __instance, G g, RunConfig runConfig, HashSet<Deck> unlockedChars)
@@ -349,34 +351,35 @@ internal static class NewRunOptionsPatches
 		UIKey key;
 		foreach (string ship in g.state.storyVars.GetUnlockedShips())
 		{
-			key = new UIKey(Manifest.Instance.EssentialsApi.ShipSelectionUiKey, 0, ship);
+			key = new UIKey(Instance.EssentialsApi.ShipSelectionUiKey, 0, ship);
 			if (g.boxes.FirstOrDefault(b => b.key == key) is not { } box)
 				continue;
 			
 			box.onMouseDownRight = OnMouseDownRightShipHandler;
 			box.onInputPhase = OnMouseDownRightShipHandler;
 
-			if (Instance.ShipLockAndBan.IsLocked(g.state, ship)) {
-				Spr sprite = (Spr)Manifest.ShipLockIcon.Id!;
+			if (ShipLockAndBan.IsLocked(g.state, ship)) {
+				Spr sprite = ModEntry.ShipLockIcon;
+				bool isHover = box.IsHover() || (g.state.runConfig.selectedShip == ship);
 
-				Rect rect = new(box.rect.x + 71, box.rect.y + 1, 35, 33);
+				Rect rect = new(box.rect.x + 71, box.rect.y + (isHover ? 1 : 0), 35, 33);
 				
-				UIKey uiKey = new(Manifest.Instance.EssentialsApi.ShipSelectionUiKey, 0, "lock" + ship);
+				UIKey uiKey = new(Instance.EssentialsApi.ShipSelectionUiKey, 0, "lock" + ship);
 				
 				Box newBox = g.Push(uiKey, rect, null, false, noHoverSound: false, gamepadUntargetable: false, ReticleMode.Quad, null, null, null, null, 0, null, null, null, null);
 				Vec pos = newBox.rect.xy;
 
-				Draw.Sprite(sprite, pos.x, pos.y, flipX: false, flipY: false, 0.0, null, null, null, new Rect(0, 0, 33, 33), Colors.buttonBoxNormal);
+				Draw.Sprite(sprite, pos.x, pos.y, flipX: false, flipY: false, 0.0, null, null, null, new Rect(0, 0, 33, 33), isHover ? Colors.buttonBoxNormal : Colors.menuHighlightBox);
 
 				g.Pop();
 			}
-			if (Instance.ShipLockAndBan.IsBanned(g.state, ship)) {
-				Spr sprite = (Spr)Manifest.ShipBanIcon.Id!;
-				bool isHover = box.IsHover();
+			if (ShipLockAndBan.IsBanned(g.state, ship)) {
+				Spr sprite = ModEntry.ShipBanIcon;
+				bool isHover = box.IsHover() || (g.state.runConfig.selectedShip == ship);
 
 				Rect rect = new(box.rect.x + 71, box.rect.y + (isHover ? 1 : 0), 35, 33);
 				
-				UIKey uiKey = new(Manifest.Instance.EssentialsApi.ShipSelectionUiKey, 0, "ban" + ship);
+				UIKey uiKey = new(Instance.EssentialsApi.ShipSelectionUiKey, 0, "ban" + ship);
 				
 				Box newBox = g.Push(uiKey, rect, null, false, noHoverSound: false, gamepadUntargetable: false, ReticleMode.Quad, null, null, null, null, 0, null, null, null, null);
 				Vec pos = newBox.rect.xy;
@@ -389,7 +392,7 @@ internal static class NewRunOptionsPatches
 		ValidateShips(g, __instance);
 
 
-		key = new UIKey(Manifest.Instance.EssentialsApi.ShipSelectionToggleUiKey);
+		key = new UIKey(Instance.EssentialsApi.ShipSelectionToggleUiKey);
 		var selectionState = g.state.runConfig.GetSelectionState();
 		if (g.boxes.FirstOrDefault(b => b.key == key) is not { } box2 || selectionState.Item1[selectionState.Item3].Key != g.state.runConfig.selectedShip)
 			return;
@@ -398,13 +401,13 @@ internal static class NewRunOptionsPatches
 		box2.onInputPhase = OnMouseDownRightShipHandler;
 
 		string selectedShip = g.state.runConfig.selectedShip;
-		if (Instance.ShipLockAndBan.IsLocked(g.state, selectedShip)) {
-			Spr sprite = (Spr)Manifest.ShipLockIcon.Id!;
-			bool isHover = box2.IsHover() || g.boxes.Exists(b => b.key?.k == Manifest.Instance.EssentialsApi.ShipSelectionUiKey);
+		if (ShipLockAndBan.IsLocked(g.state, selectedShip)) {
+			Spr sprite = ModEntry.ShipLockIcon;
+			bool isHover = box2.IsHover() || g.boxes.Exists(b => b.key?.k == Instance.EssentialsApi.ShipSelectionUiKey);
 
 			Rect rect = new(box2.rect.x + 85, box2.rect.y + (isHover ? 1 : 0), 35, 33);
 			
-			UIKey uiKey = new(Manifest.Instance.EssentialsApi.ShipSelectionToggleUiKey, 0, "toggleButtonLock");
+			UIKey uiKey = new(Instance.EssentialsApi.ShipSelectionToggleUiKey, 0, "toggleButtonLock");
 			
 			Box newBox = g.Push(uiKey, rect, null, false, noHoverSound: false, gamepadUntargetable: false, ReticleMode.Quad, null, null, null, null, 0, null, null, null, null);
 			Vec pos = newBox.rect.xy;
@@ -418,7 +421,8 @@ internal static class NewRunOptionsPatches
 
 sealed class OnMouseDownRightHandler : OnMouseDownRight, OnInputPhase
 {
-	internal static LockAndBan LockAndBan => Manifest.Instance.LockAndBan;
+	private static ModEntry Instance => ModEntry.Instance;
+	internal static LockAndBan LockAndBan => Instance.LockAndBan;
 
 	public void OnMouseDownRight(G g, Box b)
 	{
@@ -473,29 +477,28 @@ sealed class OnMouseDownRightHandler : OnMouseDownRight, OnInputPhase
 
 sealed class OnMouseDownRightShipHandler : OnMouseDownRight, OnInputPhase
 {
-	internal static ShipLockAndBan LockAndBan => Manifest.Instance.ShipLockAndBan;
+	private static ModEntry Instance => ModEntry.Instance;
 
 	public void OnMouseDownRight(G g, Box b)
 	{
-		string? str = b.key?.StringFor(Manifest.Instance.EssentialsApi.ShipSelectionUiKey);
+		string? str = b.key?.StringFor(Instance.EssentialsApi.ShipSelectionUiKey);
 		if (str != null) {
 			State s = g.state;
 			RunConfig runConfig = s.runConfig;
 			string key = str;
 
-			if (runConfig.selectedShip == key) {
+			if (runConfig.selectedShip == key && !ShipLockAndBan.IsBanned(s, key)) {
 				ToggleShipLock(s, key);
 			}
 			else {
 				ToggleShipBan(s, key);
 			}
 		}
-		if (b.key?.k == Manifest.Instance.EssentialsApi.ShipSelectionToggleUiKey) {
+		if (b.key?.k == Instance.EssentialsApi.ShipSelectionToggleUiKey) {
 			State s = g.state;
-			RunConfig runConfig = s.runConfig;
 
 			ToggleShipLock(s, s.runConfig.selectedShip);
-			LockAndBan.SetBan(s, s.runConfig.selectedShip, false);
+			ShipLockAndBan.SetBan(s, s.runConfig.selectedShip, false);
 		}
 	}
 
@@ -506,12 +509,12 @@ sealed class OnMouseDownRightShipHandler : OnMouseDownRight, OnInputPhase
 		if (!Input.GetGpDown(Btn.B))
 			return;
 
-		if (b.key?.k == Manifest.Instance.EssentialsApi.ShipSelectionToggleUiKey) {
+		if (b.key?.k == Instance.EssentialsApi.ShipSelectionToggleUiKey) {
 			State s = g.state;
 
 			ToggleShipLock(s, s.runConfig.selectedShip);
 		}
-		string? str = b.key?.StringFor(Manifest.Instance.EssentialsApi.ShipSelectionUiKey);
+		string? str = b.key?.StringFor(Instance.EssentialsApi.ShipSelectionUiKey);
 		if (str != null) {
 			State s = g.state;
 			RunConfig runConfig = s.runConfig;
@@ -530,10 +533,10 @@ sealed class OnMouseDownRightShipHandler : OnMouseDownRight, OnInputPhase
 	
 	static void ToggleShipLock(State state, string key) {
 		Audio.Play(Event.Click);
-		LockAndBan.SetLock(state, key, !LockAndBan.IsLocked(state, key));
+		ShipLockAndBan.SetLock(state, key, !ShipLockAndBan.IsLocked(state, key));
 	}
 	static void ToggleShipBan(State state, string key) {
 		Audio.Play(Event.Click);
-		LockAndBan.SetBan(state, key, !LockAndBan.IsBanned(state, key));
+		ShipLockAndBan.SetBan(state, key, !ShipLockAndBan.IsBanned(state, key));
 	}
 }

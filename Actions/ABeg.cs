@@ -1,20 +1,19 @@
-using CobaltCoreModding.Definitions;
+using System.Collections.Generic;
+using System.Linq;
 using FSPRO;
+using Nickel;
 
 namespace TheJazMaster.MoreDifficulties.Actions;
 
 public class ABeg : CardAction
 {
-	private static readonly Lazy<Spr> icon = new Lazy<Spr>(() => (Spr)Manifest.BegIcon!.Id!); 
-
 	public override void Begin(G g, State s, Combat c)
 	{
 		foreach (StuffBase item in c.stuff.Values.ToList())
 		{
 			if (item is Missile missile && missile.missileType != MissileType.normal) {
 				c.stuff.Remove(item.x);
-				Missile value = new Missile
-				{
+				Missile value = new() {
 					x = item.x,
 					xLerped = item.xLerped,
 					bubbleShield = item.bubbleShield,
@@ -38,16 +37,16 @@ public class ABeg : CardAction
 				value.hilight = 2;
 			}
 		}
-		var result = new List<Tooltip>
-		{
-			new TTGlossary(Manifest.BegGlossary?.Head ?? throw new Exception("Missing Beg Glossary"))
-		};
-		// result.AddRange(new Missile().GetTooltips());
-		return result;
+        return [
+			new GlossaryTooltip("action.beg") {
+                TitleColor = Colors.action,
+                Icon = ModEntry.BegIcon,
+				Title = ModEntry.Instance.Localizations.Localize(["action", "beg", "name"]),
+				Description = ModEntry.Instance.Localizations.Localize(["action", "beg", "description"]),
+            },
+			.. new Missile().GetTooltips()
+        ];
 	}
 
-	public override Icon? GetIcon(State s)
-	{
-		return new Icon(icon.Value, null, Colors.textMain);
-	}
+    public override Icon? GetIcon(State s) => new Icon(ModEntry.BegIcon, null, Colors.textMain);
 }

@@ -1,32 +1,29 @@
 {
-  "EntryPointAssembly": "MoreDifficulties.dll",
-  "UniqueName": "TheJazMaster.MoreDifficulties",
-  "Version": "1.6.0",
-  "RequiredApiVersion": "0.1.0",
-  "Dependencies": [
-    {
-      "UniqueName": "Nickel.Legacy",
-      "Version": "0.3.0",
-      "IsRequired": true
-    },
-    {
-      "UniqueName": "Nickel.Essentials",
-      "Version": "1.3.0",
-      "IsRequired": true
-    },
-    {
-      "UniqueName": "Shockah.Kokoro",
-      "Version": "1.3.1",
-      "IsRequired": true
-    }
-  ],
-  "ModType": "Nickel.Legacy",
-  "UpdateChecks": {
-		"NexusMods": {
-			"ID": 15
-		},
-		"GitHub": {
-			"Repository": "TheJazMaster/MoreDifficulties"
-		}
-	}
+    "EntryPointAssembly": "MoreDifficulties.dll",
+    "UniqueName": "TheJazMaster.MoreDifficulties",
+    "Version": "2.0.0",
+    "RequiredApiVersion": "0.1.0",
+    "Dependencies": [
+        {
+            "UniqueName": "Nickel.Essentials",
+            "Version": "1.3.0"
+        },
+        {
+            "UniqueName": "Shockah.CustomRunOptions",
+            "IsRequired": false
+        }
+    ],
+    "MethodsToStopInlining": [
+        { "TypeName": "State", "MethodName": "GetHarderEnemies" },
+        { "TypeName": "State", "MethodName": "GetHarderElites" },
+        { "TypeName": "State", "MethodName": "GetHarderBosses" }
+    ],
+    "UpdateChecks": {
+            "NexusMods": {
+                "ID": 15
+            },
+            "GitHub": {
+                "Repository": "TheJazMaster/MoreDifficulties"
+            }
+        }
 }

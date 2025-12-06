@@ -1,68 +1,74 @@
 
-using CobaltCoreModding.Definitions;
 using HarmonyLib;
-using System.Reflection;
-using System.Reflection.Emit;
-using static System.Reflection.BindingFlags;
 
 namespace TheJazMaster.MoreDifficulties.AIPatches;
 
 [HarmonyPatch]
-public static class MediumFighterZone3Patch {
+public static class MediumFighterZone3Patch
+{
+
+	[HarmonyPatch(typeof(MediumFighterZone3), nameof(MediumFighterZone3.OnCombatStart))]
+	[HarmonyPostfix]
+	private static void OnCombatStart_Postfix(MediumFighterZone3 __instance, State s, Combat c) {
+		if (AIUtils.AreEnemiesEvenHarder(s))
+			c.Queue(new AStatus {
+				targetPlayer = false,
+				status = ModEntry.GrazerStatus,
+				statusAmount = 1
+			});
+	}
 
 	[HarmonyPatch(typeof(MediumFighterZone3), nameof(MediumFighterZone3.PickNextIntent))]
 	[HarmonyPrefix]
 	private static bool PickNextIntent_Prefix(MediumFighterZone3 __instance, ref EnemyDecision __result, State s, Combat c, Ship ownShip) {
-		if (s.GetDifficulty() < Manifest.Difficulty2) return true;
+		if (!AIUtils.AreEnemiesEvenHarder(s)) return true;
 
 		__result = AIUtils.MoveSet(__instance.aiCounter++, () => new EnemyDecision
 		{
 			actions = AIHelpers.MoveToAimAt(s, ownShip, s.ship, "cannon1"),
-			intents = new List<Intent>
-			{
-				new IntentAttack
+			intents = [
+                new IntentAttack
 				{
 					damage = 3,
-					fromX = 2
+					key = "cannon1"
 				},
 				new IntentAttack
 				{
 					damage = 3,
-					fromX = 3
+					key = "cannon2"
 				},
 				new IntentStatus
 				{
 					status = Status.tempShield,
-					amount = 3,
+					amount = 2,
 					targetSelf = true,
-					fromX = 1
+					key = "missiles1"
 				}
-			}
+			]
 		}, () => new EnemyDecision
 		{
 			actions = AIHelpers.MoveToAimAt(s, ownShip, s.ship, "cannon1"),
-			intents = new List<Intent>
-			{
-				new IntentGiveCard
+			intents = [
+                new IntentGiveCard
 				{
 					card = new TrashUnplayable(),
 					destination = CardDestination.Discard,
-					fromX = ownShip.GetStatusOrigin() + 1
+					key = "cannon1"
 				},
 				new IntentGiveCard
 				{
 					card = new TrashUnplayable(),
 					destination = CardDestination.Discard,
-					fromX = ownShip.GetStatusOrigin() + 2
+					key = "cannon2"
 				},
 				new IntentStatus
 				{
 					status = Status.tempShield,
-					amount = 3,
+					amount = 2,
 					targetSelf = true,
-					fromX = 4
+					key = "missiles2"
 				}
-			}
+			]
 		});
 		return false;
 	}

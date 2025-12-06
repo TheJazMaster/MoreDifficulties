@@ -1,8 +1,7 @@
-using CobaltCoreModding.Definitions;
 using HarmonyLib;
-using System.Reflection;
-using Microsoft.Extensions.Logging;
 using FSPRO;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace TheJazMaster.MoreDifficulties.AIPatches;
 
@@ -11,7 +10,7 @@ Avoids mines
 */
 [HarmonyPatch]
 public static class GoliathDefenderPatch {
-	private static Manifest Instance => Manifest.Instance;
+	private static ModEntry Instance => ModEntry.Instance;
 
 	public static List<CardAction> MoveToAimAtAvoidingMines(State s, Ship movingShip, Ship targetShip, string key, string mineAvoidKey, string? backupKey = null)
 	{
@@ -19,25 +18,24 @@ public static class GoliathDefenderPatch {
 		Route route = s.route;
 		if (route is not Combat c)
 		{
-			return new List<CardAction>();
+			return [];
 		}
 		if (movingShip.Get(Status.engineStall) > 0)
 		{
 			Audio.Play(Event.Status_PowerDown);
 			movingShip.Add(Status.engineStall, -1);
 			movingShip.shake += 1.0;
-			return new List<CardAction>();
+			return [];
 		}
-		StuffBase? value;
-		var list = (from pair in targetShip.parts.Select((Part part, int x) => new
-		{
-			part,
-			x,
-			drone = c.stuff.TryGetValue(x + targetShip.x, out value) ? value : null
-		})
-					where pair.part.type != PType.empty
-					select pair).ToList();
-		var list2 = list.Where(pair =>
+        var list = (from pair in targetShip.parts.Select((Part part, int x) => new
+        {
+            part,
+            x,
+            drone = c.stuff.TryGetValue(x + targetShip.x, out StuffBase? value) ? value : null
+        })
+                    where pair.part.type != PType.empty
+                    select pair).ToList();
+        var list2 = list.Where(pair =>
 		{
 			if (pair.drone == null)
 			{
@@ -67,7 +65,7 @@ public static class GoliathDefenderPatch {
 		int? backupAlignPartLocalX = backupKey == null ? null : (backupPart != null ? movingShip.parts.IndexOf(backupPart) : 0);
 		foreach (var data in list) {
 			anon = data;
-			if (!c.stuff.TryGetValue(data.x + targetShip.x + (mineAvoidPartLocalX - alignPartLocalX), out value) || value is not SpaceMine) {
+			if (!c.stuff.TryGetValue(data.x + targetShip.x + (mineAvoidPartLocalX - alignPartLocalX), out var value) || value is not SpaceMine) {
 				avoidedMine = true;
 				break;
 			}
@@ -75,7 +73,7 @@ public static class GoliathDefenderPatch {
 		if (!avoidedMine && backupAlignPartLocalX.HasValue) {
 			foreach (var data in list) {
 				anon = data;
-				if (!c.stuff.TryGetValue(data.x + targetShip.x + (mineAvoidPartLocalX - backupAlignPartLocalX.Value), out value) || !(value is SpaceMine)) {
+				if (!c.stuff.TryGetValue(data.x + targetShip.x + (mineAvoidPartLocalX - backupAlignPartLocalX.Value), out var value) || value is not SpaceMine) {
 					avoidedMine = true;
 					break;
 				}
@@ -88,7 +86,7 @@ public static class GoliathDefenderPatch {
 	[HarmonyPatch(typeof(GoliathDefender), nameof(GoliathDefender.PickNextIntent))]
 	[HarmonyPrefix]
 	public static bool PickNextIntent_Prefix(GoliathDefender __instance, ref EnemyDecision __result, State s, Combat c, Ship ownShip) {
-		if (s.GetDifficulty() < Manifest.Difficulty2) return true;
+		if (!AIUtils.AreEnemiesEvenHarder(s)) return true;
 		
 		if (__instance.maxMultiHit > 5)
 		{
@@ -97,39 +95,37 @@ public static class GoliathDefenderPatch {
 		__result = AIUtils.MoveSet(__instance.aiCounter++, () => new EnemyDecision
 		{
 			actions = MoveToAimAtAvoidingMines(s, ownShip, s.ship, "cannon2", "missiles", "cannon1"),
-			intents = new List<Intent>
-			{
-				new IntentAttack
+			intents = [
+                new IntentAttack
 				{
 					damage = 2,
-					fromX = 1
+					key = "cannon1"
 				},
 				new IntentAttack
 				{
 					damage = 2,
-					fromX = 3
+					key = "cannon2"
 				},
 				new IntentSpawn
 				{
-					fromX = 4,
+					key = "missiles",
 					thing = new SpaceMine()
 				}
-			}
+			]
 		}, () => new EnemyDecision
 		{
 			actions = MoveToAimAtAvoidingMines(s, ownShip, s.ship, "cannon1", "missiles"),
-			intents = new List<Intent>
-			{
-				new IntentAttack
+			intents = [
+                new IntentAttack
 				{
 					damage = 1,
-					fromX = 1,
+					key = "cannon1",
 					multiHit = 2
 				},
 				new IntentAttack
 				{
 					damage = 1,
-					fromX = 3,
+					key = "cannon2",
 					multiHit = ++__instance.maxMultiHit
 				},
 				new IntentStatus
@@ -137,9 +133,9 @@ public static class GoliathDefenderPatch {
 					status = Status.tempShield,
 					amount = 2,
 					targetSelf = true,
-					fromX = 2
+					key = "cockpit"
 				}
-			}
+			]
 		});
 
 		return false;

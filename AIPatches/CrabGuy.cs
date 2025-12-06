@@ -1,9 +1,5 @@
 
-using CobaltCoreModding.Definitions;
 using HarmonyLib;
-using System.Reflection;
-using System.Reflection.Emit;
-using static System.Reflection.BindingFlags;
 
 namespace TheJazMaster.MoreDifficulties.AIPatches;
 
@@ -13,7 +9,7 @@ public static class CrabGuyPatch {
 	[HarmonyPatch(typeof(CrabGuy), nameof(CrabGuy.PickNextIntent))]
 	[HarmonyPrefix]
 	private static bool PickNextIntent_Prefix(CrabGuy __instance, ref EnemyDecision __result, State s, Combat c, Ship ownShip) {
-		if (s.GetDifficulty() < Manifest.Difficulty2) return true;
+		if (!AIUtils.AreEnemiesEvenHarder(s)) return true;
 
 		bool bubbledSeekers = true;
 		if (c.turn == 0)
@@ -21,11 +17,10 @@ public static class CrabGuyPatch {
 			__result = AIUtils.MoveSet(0, () => new EnemyDecision
 			{
 				actions = AIHelpers.MoveToAimAt(s, ownShip, s.ship, "cannon1", 99, movesFast: true, null, avoidAsteroids: false, avoidMines: false),
-				intents = new List<Intent>
-				{
-					new IntentSpawn
+				intents = [
+                    new IntentSpawn
 					{
-						fromX = 1,
+						key = "missiles1",
 						thing = new AttackDrone
 						{
 							targetPlayer = true,
@@ -35,7 +30,7 @@ public static class CrabGuyPatch {
 					},
 					new IntentSpawn
 					{
-						fromX = 4,
+						key = "missiles2",
 						thing = new AttackDrone
 						{
 							targetPlayer = true,
@@ -43,7 +38,7 @@ public static class CrabGuyPatch {
 							bubbleShield = true
 						}
 					}
-				}
+				]
 			});
 			return false;
 		}
@@ -52,34 +47,31 @@ public static class CrabGuyPatch {
 			bool left = s.rngAi.Next() > 0.5;
 			__result = AIUtils.MoveSet(0, () => new EnemyDecision
 			{
-				actions = new List<CardAction>
-				{
-					new AMove
+				actions = [
+                    new AMove
 					{
 						dir = left ? (-5) : 5,
 						targetPlayer = false
 					}
-				},
-				intents = new List<Intent>
-				{
-					new IntentMissile
+				],
+				intents = [
+                    new IntentMissile
 					{
-						fromX = (!left) ? 1 : 4,
+						key = !left ? "missiles1" : "missiles2",
 						missileType = MissileType.seeker,
 						bubbleShield = bubbledSeekers
 					}
-				}
+				]
 			});
 			return false;
 		}
 		__result = AIUtils.MoveSet(__instance.aiCounter++, () => new EnemyDecision
 		{
 			actions = AIHelpers.MoveToAimAt(s, ownShip, s.ship, "missiles1", 99, movesFast: true, null, avoidAsteroids: false, avoidMines: false),
-			intents = new List<Intent>
-			{
-				new IntentSpawn
+			intents = [
+                new IntentSpawn
 				{
-					fromX = 1,
+					key = "missiles1",
 					thing = new AttackDrone
 					{
 						targetPlayer = true,
@@ -89,7 +81,7 @@ public static class CrabGuyPatch {
 				},
 				new IntentSpawn
 				{
-					fromX = 4,
+					key = "missiles2",
 					thing = new AttackDrone
 					{
 						targetPlayer = true,
@@ -97,63 +89,60 @@ public static class CrabGuyPatch {
 						bubbleShield = true
 					}
 				}
-			}
+			]
 		}, () => new EnemyDecision
 		{
 			actions = AIHelpers.MoveToAimAt(s, ownShip, s.ship, "cannon1", 99, movesFast: true, null, avoidAsteroids: false, avoidMines: false),
-			intents = new List<Intent>
-			{
+			intents = [
+                new IntentAttack
+				{
+					damage = 1,
+					status = Status.drawLessNextTurn,
+					statusAmount = 1,
+					key = "wing1",
+				},
+				new IntentAttack
+				{
+					damage = 2,
+					key = "cannon1",
+				},
+				new IntentAttack
+				{
+					damage = 2,
+					key = "cannon2",
+				},
 				new IntentAttack
 				{
 					damage = 1,
 					status = Status.drawLessNextTurn,
 					statusAmount = 1,
-					fromX = 0
-				},
-				new IntentAttack
-				{
-					damage = 2,
-					fromX = 2
-				},
-				new IntentAttack
-				{
-					damage = 2,
-					fromX = 3
-				},
-				new IntentAttack
-				{
-					damage = 1,
-					status = Status.drawLessNextTurn,
-					statusAmount = 1,
-					fromX = 5
+					key = "wing2",
 				}
-			}
+			]
 		}, () => new EnemyDecision
 		{
-			actions = new List<CardAction>
-			{
-				new AMove
+			actions = [
+                new AMove
 				{
 					dir = 6,
 					isRandom = true,
 					targetPlayer = false
 				}
-			},
-			intents = new List<Intent>
-			{
-				new IntentMissile
+			],
+			intents = [
+                new IntentMissile
 				{
-					fromX = 1,
+					key = "missiles1",
 					missileType = MissileType.seeker,
 					bubbleShield = bubbledSeekers
 				},
 				new IntentMissile
 				{
-					fromX = 4,
+					key = "missiles2",
 					missileType = MissileType.seeker,
 					bubbleShield = bubbledSeekers
 				}
-			}
+			]
 		});
 		
 		return false;

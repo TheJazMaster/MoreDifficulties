@@ -1,3 +1,5 @@
+using System;
+
 namespace TheJazMaster.MoreDifficulties;
 
 public interface IMoreDifficultiesApi
@@ -20,6 +22,6 @@ public interface IMoreDifficultiesApi
     Type FatigueCardType { get; }
 
 
-	void DisableCharacterExtrasRendering();
+    void DisableCharacterExtrasRendering();
 	void ReenableCharacterExtrasRendering();
 }

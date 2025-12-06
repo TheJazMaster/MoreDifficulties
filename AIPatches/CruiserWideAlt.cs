@@ -1,6 +1,4 @@
-using CobaltCoreModding.Definitions;
 using HarmonyLib;
-using System.Reflection;
 
 namespace TheJazMaster.MoreDifficulties.AIPatches;
 
@@ -14,85 +12,82 @@ public static class WideCruiserAltPatch {
 	[HarmonyPatch(typeof(WideCruiserAlt), nameof(WideCruiserAlt.PickNextIntent))]
 	[HarmonyPrefix]
 	private static bool PickNextIntent_Prefix(WideCruiserAlt __instance, ref EnemyDecision __result, State s, Combat c, Ship ownShip) {
-		if (s.GetDifficulty() < Manifest.Difficulty2) return true;
+		if (!AIUtils.AreEnemiesEvenHarder(s)) return true;
 		
 		MissileType missileType = (s.GetHarderEnemies() && __instance.aiCounter > 3) ? MissileType.heavy : MissileType.normal;
 		__result = AIUtils.MoveSet(__instance.aiCounter++, () => new EnemyDecision
 		{
 			actions = AIUtils.MoveToAimAtPincer(s, ownShip, s.ship, "cannonMidL", 2),
-			intents = new List<Intent>
-			{
-				new IntentMissile
+			intents = [
+                new IntentMissile
 				{
-					fromX = 1
+					key = "cannonOuterL",
 				},
 				new IntentAttack
 				{
 					damage = 3,
-					fromX = 2
+					key = "cannonMidL",
 				},
 				new IntentAttack
 				{
 					damage = 3,
-					fromX = 6
+					key = "cannonMidR",
 				},
 				new IntentMissile
 				{
-					fromX = 7
+					key = "cannonOuterR",
 				}
-			}
+			]
 		}, () => new EnemyDecision
 		{
 			actions = AIUtils.MoveToAimAtPincer(s, ownShip, s.ship, "cannonInnerL", 2),
-			intents = new List<Intent>
-			{
-				new IntentMissile
+			intents = [
+                new IntentMissile
 				{
-					fromX = 2,
+					key = "cannonMidL",
 					missileType = missileType
 				},
 				new IntentAttack
 				{
 					damage = 2,
-					fromX = 3
+					key = "cannonInnerL",
 				},
 				new IntentAttack
 				{
 					damage = 2,
-					fromX = 5
+					key = "cannonInnerR",
 				},
 				new IntentMissile
 				{
-					fromX = 6,
+					key = "cannonMidR",
 					missileType = missileType
 				}
-			}
+			]
 		}, () => new EnemyDecision
 		{
 			actions = AIHelpers.MoveToAimAt(s, ownShip, s.ship, "cannonInnerL"),
-			intents = new List<Intent>
-			{
-				new IntentMissile
+			intents = [
+                new IntentMissile
 				{
-					fromX = 3,
+					key = "cannonInnerL",
 					missileType = MissileType.heavy
 				},
 				new IntentMissile
 				{
-					fromX = 5,
+					key = "cannonInnerR",
 					missileType = MissileType.heavy
 				},
 				new IntentAttack
 				{
 					damage = 2,
-					fromX = 1
+					key = "cannonOuterL",
 				},
 				new IntentAttack
 				{
 					damage = 2,
-					fromX = 7
+					key = "cannonOuterR",
 				}
-			}
+			]
 		});
 
 		return false;

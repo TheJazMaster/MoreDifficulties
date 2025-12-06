@@ -1,38 +1,39 @@
 using System.Collections.Generic;
+using System.Reflection;
+using Nanoray.PluginManager;
+using Nickel;
 using TheJazMaster.MoreDifficulties.Actions;
 
 namespace TheJazMaster.MoreDifficulties.Cards;
 
-[CardMeta(deck = Deck.trash, dontOffer = true, rarity = Rarity.common)]
-public class Beg : Card
+
+public class Beg : Card, IRegisterableCard
 {
-	// private static readonly Lazy<Spr> art = new Lazy<Spr>(() => Enum.Parse<Spr>("cards_Trash")); 
+    internal static Spr TopSprite;
+	internal static Spr BottomSprite;
 
-	public override string Name()
-	{
-		return "Beg";
-	}
+    public static void Register(IModHelper helper, IPluginPackage<IModManifest> package) {
+		TopSprite = helper.Content.Sprites.RegisterSprite(package.PackageRoot.GetRelativeFile("Sprites/beg_yes.png")).Sprite;
+		BottomSprite = helper.Content.Sprites.RegisterSprite(package.PackageRoot.GetRelativeFile("Sprites/beg_no.png")).Sprite;
 
-	public override CardData GetData(State state)
-	{
-		return new CardData {
-			cost = 0,
-			// art = art.Value,
-			temporary = true,
-			exhaust = true,
-			floppable = true,
-			art = flipped ? (Spr)Manifest.BegNoArt!.Id! : (Spr)Manifest.BegYesArt!.Id!
-		};
-	}
+        IRegisterableCard.Register(MethodBase.GetCurrentMethod()!.DeclaringType!, Deck.trash, Rarity.common, TopSprite, helper, package, true);
+    }
+
+	public override CardData GetData(State state) => new() {
+		cost = 0,
+		temporary = true,
+		exhaust = true,
+		floppable = true,
+		art = flipped ? BottomSprite : TopSprite!
+	};
 
 	public override List<CardAction> GetActions(State s, Combat c)
 	{
-		return new List<CardAction> {
+		return [
 			new ABeg {
 				disabled = flipped
 			},
-			new AAddCard
-			{
+			new AAddCard {
 				card = new Fear(),
 				destination = CardDestination.Deck,
 				amount = 2,
@@ -46,6 +47,6 @@ public class Beg : Card
 				statusAmount = 1,
 				disabled = !flipped
 			}
-		};
+		];
 	}
 }

@@ -1,11 +1,14 @@
+using System.Collections.Generic;
 using Microsoft.Extensions.Logging;
+using Nickel;
 
 namespace TheJazMaster.MoreDifficulties;
 
 
 internal class AltStarters
 {
-	internal Manifest Instance => Manifest.Instance;
+	internal static ModEntry Instance => ModEntry.Instance;
+	private static IModData ModData => Instance.Helper.ModData;
 
 	internal static readonly string AltStartersKey = "AltStarters";
 
@@ -14,36 +17,36 @@ internal class AltStarters
 		return AltStartersKey + deck.Key();
 	}
 
-	internal bool AreAltStartersEnabled(State state, Deck deck)
+	internal static bool AreAltStartersEnabled(State state, Deck deck)
 	{
-		return HasAltStarters(deck) && Instance.KokoroApi.TryGetExtensionData<bool>(state, Key(deck), out var on) && on;
+		return HasAltStarters(deck) && ModData.TryGetModData<bool>(state, Key(deck), out var on) && on;
 	}
 
-	internal bool HasAltStarters(Deck deck)
+	internal static bool HasAltStarters(Deck deck)
 	{
 		return altStarters.ContainsKey(deck);
 	}
 
-	internal StarterDeck? GetAltStarters(Deck deck)
+	internal static StarterDeck? GetAltStarters(Deck deck)
 	{
 		return altStarters.GetValueOrDefault(deck);
 	}
 
-	internal void SetAltStarters(State state, Deck deck, bool on)
+	internal static void SetAltStarters(State state, Deck deck, bool on)
 	{
-		Instance.KokoroApi.SetExtensionData(state, Key(deck), on);
+		ModData.SetModData(state, Key(deck), on);
 	}
 
-	internal void RegisterAltStarters(Deck deck, StarterDeck starterDeck)
+	internal static void RegisterAltStarters(Deck deck, StarterDeck starterDeck)
 	{
 		if (altStarters.ContainsKey(deck))
 		{
-			Manifest.Instance.Logger!.LogWarning("Deck {Name} already has registered alternative starters.", new { Name = deck.Key() });
+			ModEntry.Instance.Logger!.LogWarning("Deck {Name} already has registered alternative starters.", new { Name = deck.Key() });
 		}
 		altStarters.Add(deck, starterDeck);
 	}
 
-	internal Dictionary<Deck, StarterDeck> altStarters = new() {
+	internal static Dictionary<Deck, StarterDeck> altStarters = new() {
 		{
 			Deck.dizzy,
 			new StarterDeck() {

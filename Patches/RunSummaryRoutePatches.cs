@@ -1,29 +1,23 @@
 ﻿using HarmonyLib;
-using Microsoft.Extensions.Logging;
 using Nanoray.Shrike.Harmony;
 using Nanoray.Shrike;
-using System.Collections.Generic;
 using System.Reflection.Emit;
 using System.Reflection;
+using Nickel;
+using System.Collections.Generic;
 using System;
 using System.Linq;
-using static System.Reflection.BindingFlags;
 
 namespace TheJazMaster.MoreDifficulties;
 
+[HarmonyPatch]
 internal static class RunSummaryRoutePatches
 {
-	private static Manifest Instance => Manifest.Instance;
+	private static ModEntry Instance => ModEntry.Instance;
+	private static IModData ModData => Instance.Helper.ModData;
 
-	public static void Apply(Harmony harmony)
-	{
-		harmony.TryPatch(
-			logger: Instance.Logger!,
-			original: typeof(RunSummaryRoute).GetMethod("Render", AccessTools.all),
-			transpiler: new HarmonyMethod(typeof(RunSummaryRoutePatches).GetMethod("RunSummaryRoute_Render_Transpiler", AccessTools.all))
-		);
-	}
-
+	[HarmonyTranspiler]
+	[HarmonyPatch(typeof(RunSummaryRoute), nameof(RunSummaryRoute.Render))]
 	private static IEnumerable<CodeInstruction> RunSummaryRoute_Render_Transpiler(IEnumerable<CodeInstruction> instructions, MethodBase originalMethod)
 	{
 		var elem = new SequenceBlockMatcher<CodeInstruction>(instructions)
@@ -42,17 +36,17 @@ internal static class RunSummaryRoutePatches
 			.Find(
 				ILMatches.Newobj(typeof(Character).GetConstructor(Array.Empty<Type>())!)
 			)
-			.Insert(SequenceMatcherPastBoundsDirection.After, SequenceMatcherInsertionResultingBounds.IncludingInsertion, new List<CodeInstruction> {
+			.Insert(SequenceMatcherPastBoundsDirection.After, SequenceMatcherInsertionResultingBounds.IncludingInsertion, [
 				new(OpCodes.Dup),
 				new(OpCodes.Ldarg_0),
 				new(OpCodes.Call, AccessTools.DeclaredMethod(typeof(RunSummaryRoutePatches), nameof(RunSummaryRoute_Render_Transpiler_SetRunSummaryRoute)))
-			})
+			])
 			.AllElements();
 	}
 
 	private static void RunSummaryRoute_Render_Transpiler_SetRunSummaryRoute(Character character, RunSummaryRoute route)
 	{
-		Instance.KokoroApi.SetExtensionData(character, "runSummaryRoute", route);
+		ModData.SetModData(character, "runSummaryRoute", route);
 	}
 
 	private static NewRunOptions.DifficultyLevel RunSummaryRoute_Render_Transpiler_GetDifficulty(List<NewRunOptions.DifficultyLevel> difficulties, int level)

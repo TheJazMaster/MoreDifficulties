@@ -1,40 +1,22 @@
-﻿using FSPRO;
+﻿using System.Collections.Generic;
+using System.Linq;
 using HarmonyLib;
-using Microsoft.Extensions.Logging;
-using Microsoft.Xna.Framework.Graphics;
-using Nanoray.Shrike;
-using Nanoray.Shrike.Harmony;
 using Nickel;
-using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Diagnostics.Metrics;
-using System.Reflection;
-using System.Reflection.Emit;
-using System.Security.AccessControl;
-using static SharedArt;
 
 namespace TheJazMaster.MoreDifficulties;
 
+[HarmonyPatch]
 internal static class DailyDescriptorPatches
 {
-	private static Manifest Instance => Manifest.Instance;
+	private static ModEntry Instance => ModEntry.Instance;
+	private static IModData ModData => Instance.Helper.ModData;
 
 	private static readonly string AltStartersDailyKey = "AltStartersDaily";
 	private static readonly string AltStartersStorageKey = "AltStartersStorage";
 
 
-	public static void Apply(Harmony harmony)
-	{
-		harmony.TryPatch(
-			logger: Instance.Logger!,
-			original: typeof(DailyDescriptor).GetMethod("Create", AccessTools.all),
-			prefix: new HarmonyMethod(typeof(DailyDescriptorPatches).GetMethod("DailyDescriptor_Create_Prefix", AccessTools.all)),
-			postfix: new HarmonyMethod(typeof(DailyDescriptorPatches).GetMethod("DailyDescriptor_Create_Postfix", AccessTools.all)),
-			finalizer: new HarmonyMethod(typeof(DailyDescriptorPatches).GetMethod("DailyDescriptor_Create_Finalizer", AccessTools.all))
-		);
-	}
-
+	[HarmonyPrefix]
+	[HarmonyPatch(typeof(DailyDescriptor), nameof(DailyDescriptor.Create))]
 	private static void DailyDescriptor_Create_Prefix(int daySince1970)
 	{
 		State s = MG.inst.g.state;
@@ -42,10 +24,12 @@ internal static class DailyDescriptorPatches
 		allCharsOld = NewRunOptions.allChars;
 		allShipsOld = StarterShip.ships;
 
-		NewRunOptions.allChars = NewRunOptions.allChars.Where(deck => !Manifest.Instance.LockAndBan.IsBanned(s, deck)).ToList();
-		StarterShip.ships = StarterShip.ships.Where(ship => !Manifest.Instance.ShipLockAndBan.IsBanned(s, ship.Key)).ToDictionary();
+		NewRunOptions.allChars = [.. NewRunOptions.allChars.Where(deck => !LockAndBan.IsBanned(s, deck))];
+		StarterShip.ships = StarterShip.ships.Where(ship => !ShipLockAndBan.IsBanned(s, ship.Key)).ToDictionary();
 	}
 
+	[HarmonyFinalizer]
+	[HarmonyPatch(typeof(DailyDescriptor), nameof(DailyDescriptor.Create))]
 	private static void DailyDescriptor_Create_Finalizer(int daySince1970)
 	{
 		if (allCharsOld != null) NewRunOptions.allChars = allCharsOld;
@@ -55,14 +39,17 @@ internal static class DailyDescriptorPatches
 		allShipsOld = null;
 	}
 
-	private static readonly int[] difficultyPerDayOfWeek = new int[7] {Manifest.Easy, 0, 1, 2, 3, Manifest.Difficulty1, Manifest.Difficulty2};
+	private static readonly int[] difficultyPerDayOfWeek = [ModEntry.Easy, 0, 1, 2, 3, ModEntry.Difficulty1, ModEntry.Difficulty2];
+
+	[HarmonyPostfix]
+	[HarmonyPatch(typeof(DailyDescriptor), nameof(DailyDescriptor.Create))]
 	private static void DailyDescriptor_Create_Postfix(int daySince1970, DailyDescriptor __result)
 	{
 		Rand rand = new((uint)daySince1970);
 
 		foreach (Deck character in __result.crew) {
-			if (Instance.AltStarters.HasAltStarters(character)) {
-				Manifest.Instance.KokoroApi.SetExtensionData(__result, Key(character), rand.Next() >= 0.5);
+			if (AltStarters.HasAltStarters(character)) {
+				ModData.SetModData(__result, Key(character), rand.Next() >= 0.5);
 			}
 		}
 

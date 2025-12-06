@@ -1,48 +1,32 @@
-﻿using HarmonyLib;
-using TheJazMaster.MoreDifficulties.Cards;
-using TheJazMaster.MoreDifficulties.Actions;
+﻿using System.Collections.Generic;
 using System.Reflection;
-using static System.Reflection.BindingFlags;
+using HarmonyLib;
+using Nanoray.PluginManager;
+using Nickel;
+using TheJazMaster.MoreDifficulties.Cards;
 
 namespace TheJazMaster.MoreDifficulties;
 
+[HarmonyPatch]
 internal static class ArtifactPatches
 {
-	private static Manifest Instance => Manifest.Instance;
-
-	public static void Apply(Harmony harmony)
+	[HarmonyPostfix]
+	[HarmonyPatch(typeof(Artifact), nameof(Artifact.GetLocName))]
+	private static void Artifact_GetLocName_Postfix(Artifact __instance, ref string __result)
 	{
-		harmony.TryPatch(
-			logger: Instance.Logger!,
-			original: typeof(Artifact).GetMethod("GetLocName", AccessTools.all),
-			postfix: new HarmonyMethod(typeof(ArtifactPatches).GetMethod("Artifact_GetLocName_Postfix", AccessTools.all))
-		);
-        harmony.TryPatch(
-            logger: Instance.Logger!,
-            original: typeof(Artifact).GetMethod("OnPlayerDeckShuffle", AccessTools.all),
-            postfix: new HarmonyMethod(typeof(ArtifactPatches).GetMethod("Artifact_OnPlayerDeckShuffle_Postfix", AccessTools.all))
-        );
+		if (__instance is not HARDMODE hardmode || hardmode.difficulty != ModEntry.Easy)
+			return;
+		__result = Loc.T(I18n.easyNameLoc, I18n.easyNameLocEn);
 	}
-
-    private static void Artifact_OnPlayerDeckShuffle_Postfix(Artifact __instance, State state, Combat combat) {
-        if (__instance is HARDMODE hardmode && hardmode.difficulty >= Manifest.Difficulty1 && state.deck.Count > 0)
-            // combat.QueueImmediate(new AEnergyImportant {
-            //     changeAmount = -1,
-            //     timer = 0.7,
-            //     pulseAmount = 1,
-			// 	artifactPulse = __instance.Key()
-            // });
+	
+	[HarmonyPostfix]
+	[HarmonyPatch(typeof(Artifact), nameof(Artifact.OnPlayerDeckShuffle))]
+	private static void Artifact_OnPlayerDeckShuffle_Postfix(Artifact __instance, State state, Combat combat) {
+        if (__instance is HARDMODE hardmode && hardmode.difficulty >= ModEntry.Difficulty1 && state.deck.Count > 0)
             combat.QueueImmediate(new AAddCard {
                 amount = 1,
                 card = new Fatigue(),
 				artifactPulse = __instance.Key()
             });
     }
-
-	private static void Artifact_GetLocName_Postfix(Artifact __instance, ref string __result)
-	{
-		if (__instance is not HARDMODE hardmode || hardmode.difficulty != Manifest.Easy)
-			return;
-		__result = Loc.T(I18n.easyNameLoc, I18n.easyNameLocEn);
-	}
 }

@@ -1,30 +1,21 @@
 using System.Collections.Generic;
-using TheJazMaster.MoreDifficulties.Actions;
+using System.Reflection;
+using Nanoray.PluginManager;
+using Nickel;
 
 namespace TheJazMaster.MoreDifficulties.Cards;
 
-[CardMeta(deck = Deck.trash, dontOffer = true, rarity = Rarity.common)]
-public class Fatigue : Card
+public class Fatigue : Card, IRegisterableCard
 {
-	private static readonly Lazy<Spr> art = new Lazy<Spr>(() => Enum.Parse<Spr>("cards_Trash")); 
+    public static void Register(IModHelper helper, IPluginPackage<IModManifest> package) {
+        IRegisterableCard.Register(MethodBase.GetCurrentMethod()!.DeclaringType!, Deck.trash, Rarity.common, StableSpr.cards_Trash, helper, package, true);
+    }
 
-	public override string Name()
-	{
-		return "Fatigue";
-	}
+	public override CardData GetData(State state) => new() {
+		cost = 1,
+		temporary = true,
+		exhaust = true
+	};
 
-	public override CardData GetData(State state)
-	{
-		return new CardData {
-			cost = 1,
-			temporary = true,
-			exhaust = true,
-			art = art.Value
-		};
-	}
-
-	public override List<CardAction> GetActions(State s, Combat c)
-	{
-		return new();
-	}
+    public override List<CardAction> GetActions(State s, Combat c) => [];
 }

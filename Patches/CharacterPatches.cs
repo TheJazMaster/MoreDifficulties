@@ -1,33 +1,27 @@
-﻿using System.Reflection;
+﻿using System.Linq;
 using HarmonyLib;
-using Microsoft.Extensions.Logging;
-using Microsoft.Xna.Framework.Graphics;
+using Nickel;
 
 namespace TheJazMaster.MoreDifficulties;
 
+[HarmonyPatch]
 internal static class CharacterPatches
 {
-	private static Manifest Instance => Manifest.Instance;
+	private static ModEntry Instance => ModEntry.Instance;
+	private static IModData ModData => Instance.Helper.ModData;
 
 	internal static bool skipRenderingCharacterExtras = false;
 
-	public static void Apply(Harmony harmony)
-	{
-		harmony.TryPatch(
-			logger: Instance.Logger!,
-			original: typeof(Character).GetMethod("Render", AccessTools.all),
-			postfix: new HarmonyMethod(typeof(CharacterPatches).GetMethod("Character_Render_Postfix", AccessTools.all))
-		);
-	}
-
+	[HarmonyPostfix]
+	[HarmonyPatch(typeof(Character), nameof(Character.Render))]
 	private static void Character_Render_Postfix(Character __instance, G g, int x, int y, bool flipX, bool mini, bool? isSelected, bool autoFocus, UIKey rightHint, UIKey leftHint, UIKey downHint, UIKey upHint, bool renderLocked, bool canFocus, bool showTooltips, UIKey? overrideKey = null)
 	{
 		if (__instance.deckType is not { } deck) return;
 
-		Instance.KokoroApi.TryGetExtensionData<RunSummaryRoute>(__instance, "runSummaryRoute", out var runSummaryRoute);
-		bool altStartersEnabled = runSummaryRoute != null && Instance.KokoroApi.TryGetExtensionData<bool>(runSummaryRoute.runSummary, AltStarters.Key(deck), out var altOn) ? 
-			altOn : (g.state.route is NewRunOptions nro && nro.subRoute is DailyPreview preview && preview._descriptor != null && Instance.KokoroApi.TryGetExtensionData(preview._descriptor, DailyDescriptorPatches.Key(deck), out bool altOnFordaily) ?
-			altOnFordaily : Instance.AltStarters.AreAltStartersEnabled(g.state, deck));
+		ModData.TryGetModData<RunSummaryRoute>(__instance, "runSummaryRoute", out var runSummaryRoute);
+		bool altStartersEnabled = runSummaryRoute != null && ModData.TryGetModData<bool>(runSummaryRoute.runSummary, AltStarters.Key(deck), out var altOn) ? 
+			altOn : (g.state.route is NewRunOptions nro && nro.subRoute is DailyPreview preview && preview._descriptor != null && ModData.TryGetModData(preview._descriptor, DailyDescriptorPatches.Key(deck), out bool altOnFordaily) ?
+			altOnFordaily : AltStarters.AreAltStartersEnabled(g.state, deck));
 
 		RenderBoxes(__instance, g, altStartersEnabled, deck, x, y, flipX, mini, isSelected, autoFocus, rightHint, leftHint, downHint, upHint, runSummaryRoute, overrideKey, renderLocked);
 		RenderTooltips(__instance, g, altStartersEnabled, deck, mini, renderLocked, canFocus, showTooltips, overrideKey);
@@ -51,10 +45,10 @@ internal static class CharacterPatches
 
 	private static void RenderBoxes(Character character, G g, bool altStartersEnabled, Deck deck, int x, int y, bool flipX, bool mini, bool? isSelected, bool autoFocus, UIKey rightHint, UIKey leftHint, UIKey downHint, UIKey upHint, RunSummaryRoute? runSummaryRoute, UIKey? overrideKey, bool renderLocked)
 	{
-		if (!mini || skipRenderingCharacterExtras || renderLocked || g.state.route is not { } route || !(IsInRunOptionsScreen(g) || IsInDailyScreen(g) || IsInRunSummaryScreen(g) || AreCockpitPanelsShown(g)) || !Instance.AltStarters.HasAltStarters(deck))
+		if (!mini || skipRenderingCharacterExtras || renderLocked || g.state.route is not { } route || !(IsInRunOptionsScreen(g) || IsInDailyScreen(g) || IsInRunSummaryScreen(g) || AreCockpitPanelsShown(g)) || !AltStarters.HasAltStarters(deck))
 			return;
 
-		Spr sprite = altStartersEnabled ? (Spr)Manifest.AltStartersMarker.Id! : (Spr)Manifest.AltStartersMarkerOff.Id!;
+		Spr sprite = altStartersEnabled ? ModEntry.AltStartersMarker : ModEntry.AltStartersMarkerOff;
 
 		Rect rect = new(x, y, 35, 33);
 		UK k = StableUK.char_mini; int v = (int)character.deckType.GetValueOrDefault(); string str = "altStartersBox";
@@ -80,8 +74,8 @@ internal static class CharacterPatches
 		if (!mini || skipRenderingCharacterExtras || renderLocked || !IsInRunOptionsScreen(g) || runSummaryRoute != null)
 			return;
 
-		if (Instance.LockAndBan.IsLocked(g.state, deck)) {
-			Spr sprite = (Spr)Manifest.LockBorder.Id!;
+		if (LockAndBan.IsLocked(g.state, deck)) {
+			Spr sprite = ModEntry.LockBorder;
 
 			Rect rect = new(x, y, 35 + x, 33 + y);
 			UK k = StableUK.char_mini; int v = (int)character.deckType.GetValueOrDefault(); string str = "lockBorder";
@@ -99,8 +93,8 @@ internal static class CharacterPatches
 
 			g.Pop();
 		}
-		if (Instance.LockAndBan.IsBanned(g.state, deck)) {
-			Spr sprite = Manifest.Instance.AltStarters.HasAltStarters(deck) ? (Spr)Manifest.BanBorderAlt.Id! : (Spr)Manifest.BanBorder.Id!;
+		if (LockAndBan.IsBanned(g.state, deck)) {
+			Spr sprite = AltStarters.HasAltStarters(deck) ? ModEntry.BanBorderAlt : ModEntry.BanBorder;
 
 			Rect rect = new(x, y, 35, 33);
 			UK k = StableUK.char_mini; int v = (int)character.deckType.GetValueOrDefault(); string str = "banBorder";

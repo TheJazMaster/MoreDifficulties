@@ -1,20 +1,11 @@
-using HarmonyLib;
-using Microsoft.Extensions.Logging;
-using Nanoray.Shrike.Harmony;
-using Nanoray.Shrike;
-using TheJazMaster.MoreDifficulties.Cards;
-using System.Collections.Generic;
-using System;
-using System.Linq;
-using System.Reflection.Emit;
-using System.Reflection;
-using System.Text;
+using Nickel;
 
 namespace TheJazMaster.MoreDifficulties;
 
 internal class LockAndBan
 {
-	internal static Manifest Instance => Manifest.Instance;
+	internal static ModEntry Instance => ModEntry.Instance;
+	private static IModData ModData => Instance.Helper.ModData;
 
 	internal static readonly string LockKey = "Lock";
 	internal static readonly string BanKey = "Ban";
@@ -28,21 +19,21 @@ internal class LockAndBan
 		return BanKey + deck.Key();
 	}
 
-	internal bool IsLocked(State state, Deck deck)
+	internal static bool IsLocked(State state, Deck deck)
 	{
-		return Instance.KokoroApi.TryGetExtensionData<bool>(state, KeyLock(deck), out var on) && on;
+		return ModData.TryGetModData<bool>(state, KeyLock(deck), out var on) && on;
 	}
-	internal bool IsBanned(State state, Deck deck)
+	internal static bool IsBanned(State state, Deck deck)
 	{
-		return Instance.KokoroApi.TryGetExtensionData<bool>(state, KeyBan(deck), out var on) && on;
+		return ModData.TryGetModData<bool>(state, KeyBan(deck), out var on) && on;
 	}
 
-	internal void SetLock(State state, Deck deck, bool on)
+	internal static void SetLock(State state, Deck deck, bool on)
 	{
-		Instance.KokoroApi.SetExtensionData(state, KeyLock(deck), on);
+		ModData.SetModData(state, KeyLock(deck), on);
 	}
-	internal void SetBan(State state, Deck deck, bool on)
+	internal static void SetBan(State state, Deck deck, bool on)
 	{
-		Instance.KokoroApi.SetExtensionData(state, KeyBan(deck), on);
+		ModData.SetModData(state, KeyBan(deck), on);
 	}
 }

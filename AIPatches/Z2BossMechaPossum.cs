@@ -1,7 +1,5 @@
-using CobaltCoreModding.Definitions;
-using TheJazMaster.MoreDifficulties.Cards;
+using System.Collections.Generic;
 using HarmonyLib;
-using System.Reflection;
 
 namespace TheJazMaster.MoreDifficulties.AIPatches;
 
@@ -11,7 +9,7 @@ public static class Z2BossMechaPossumPatch {
 	[HarmonyPatch(typeof(Z2BossMechaPossum), nameof(Z2BossMechaPossum.BuildShipForSelf))]
 	[HarmonyPostfix]
 	private static void BuildShipForSelf_Postfix(PirateBoss __instance, Ship __result, State s) {
-		if (s.GetDifficulty() >= Manifest.Difficulty2) {
+		if (AIUtils.AreEnemiesEvenHarder(s)) {
 			__result.parts[4].stunModifier = PStunMod.unstunnable;
 			__result.hull += 5;
 			__result.hullMax += 5;
@@ -22,7 +20,7 @@ public static class Z2BossMechaPossumPatch {
 	[HarmonyPatch(typeof(Z2BossMechaPossum), nameof(Z2BossMechaPossum.PickNextIntent))]
 	[HarmonyPrefix]
 	public static bool PickNextIntent_Prefix(Z2BossMechaPossum __instance, ref EnemyDecision __result, State s, Combat c, Ship ownShip) {
-		if (s.GetDifficulty() < Manifest.Difficulty2) return true;
+		if (!AIUtils.AreEnemiesEvenHarder(s)) return true;
 		
 		Ship ownShip2 = ownShip;
 		State s2 = s;
@@ -33,20 +31,18 @@ public static class Z2BossMechaPossumPatch {
 			{
 				part2.active = false;
 			}
-			ownShip2.RemoveParts("center", new HashSet<string> { "r.gap1", "r.gap2" });
-			ownShip2.InsertParts(s2, "l.cockpit", "center", after: false, new List<Part>
-			{
-				new Part
-				{
+			ownShip2.RemoveParts("center", ["r.gap1", "r.gap2"]);
+			ownShip2.InsertParts(s2, "l.cockpit", "center", after: false,
+            [
+                new() {
 					key = "l.gap1",
 					type = PType.empty
 				},
-				new Part
-				{
+				new() {
 					key = "l.gap2",
 					type = PType.empty
 				}
-			});
+			]);
 			return new EnemyDecision
 			{
 				actions = AIHelpers.MoveToAimAt(s2, ownShip2, s2.ship, "center"),
@@ -74,16 +70,14 @@ public static class Z2BossMechaPossumPatch {
 			};
 		}, delegate
 		{
-			ownShip2.RemoveParts("center", new HashSet<string> { "l.gap1", "l.gap2" });
+			ownShip2.RemoveParts("center", ["l.gap1", "l.gap2"]);
 			ownShip2.InsertParts(s2, "r.cockpit", "center", after: true, new List<Part>
 			{
-				new Part
-				{
+				new() {
 					key = "r.gap1",
 					type = PType.empty
 				},
-				new Part
-				{
+				new() {
 					key = "r.gap2",
 					type = PType.empty
 				}
@@ -91,9 +85,8 @@ public static class Z2BossMechaPossumPatch {
 			return new EnemyDecision
 			{
 				actions = AIHelpers.MoveToAimAt(s2, ownShip2, s2.ship, "center"),
-				intents = new List<Intent>
-				{
-					new IntentAttack
+				intents = [
+                    new IntentAttack
 					{
 						damage = 3,
 						key = "r.cannon"
@@ -110,11 +103,11 @@ public static class Z2BossMechaPossumPatch {
 						damage = 2,
 						key = "l.cannon"
 					}
-				}
+				]
 			};
 		}, delegate
 		{
-			ownShip2.RemoveParts("center", new HashSet<string> { "l.gap1", "l.gap2", "r.gap1", "r.gap2" });
+			ownShip2.RemoveParts("center", ["l.gap1", "l.gap2", "r.gap1", "r.gap2"]);
 			Part part = ownShip2.GetPart("center");
 			if (part != null)
 			{
@@ -123,16 +116,15 @@ public static class Z2BossMechaPossumPatch {
 			return new EnemyDecision
 			{
 				actions = AIHelpers.MoveToAimAt(s2, ownShip2, s2.ship, "center"),
-				intents = new List<Intent>
-				{
-					new IntentAttack
+				intents = [
+                    new IntentAttack
 					{
 						damage = 3,
 						key = "r.cannon"
 					},
 					new IntentAttack
 					{
-						damage = (s2.GetHarderBosses() ? 5 : 4),
+						damage = s2.GetHarderBosses() ? 5 : 4,
 						key = "center"
 					},
 					new IntentAttack
@@ -140,7 +132,7 @@ public static class Z2BossMechaPossumPatch {
 						damage = 2,
 						key = "l.cannon"
 					}
-				}
+				]
 			};
 		});
 		return false;
