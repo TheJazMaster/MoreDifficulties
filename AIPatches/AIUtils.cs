@@ -1,13 +1,16 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
 using FSPRO;
-using Microsoft.Extensions.Logging;
+using TheJazMaster.MoreDifficulties.Artifacts;
 
 namespace TheJazMaster.MoreDifficulties.AIPatches;
 
-public class AIUtils {
+internal sealed class AIUtils 
+{
+    public static bool AreEnemiesEvenHarder(State s) => s.GetDifficulty() >= ModEntry.Difficulty2 || s.EnumerateAllArtifacts().OfType<EvenHarderEnemies>().Any();
 
-	private static Manifest Instance => Manifest.Instance;
-
-	public static EnemyDecision MoveSet(int counter, params Func<EnemyDecision>[] generators)
+    public static EnemyDecision MoveSet(int counter, params Func<EnemyDecision>[] generators)
 	{
 		return generators.GetModulo(counter)();
 	}
@@ -17,21 +20,20 @@ public class AIUtils {
 		return generators.GetModulo(rngSource.NextInt())();
 	}
 
-	public static List<CardAction> MoveToAimAtPincer(State s, Ship movingShip, Ship targetShip, String key, int maxLocalXFromEdge = 99, bool rightEdge = false, int maxMove = 99, bool movesFast = false, bool? attackWeakPoints = null, bool avoidAsteroids = false, bool avoidMines = true)
+	public static List<CardAction> MoveToAimAtPincer(State s, Ship movingShip, Ship targetShip, string key, int maxLocalXFromEdge = 99, bool rightEdge = false, int maxMove = 99, bool movesFast = false, bool? attackWeakPoints = null, bool avoidAsteroids = false, bool avoidMines = true, bool avoidDualDrones = false)
 	{
 		Ship targetShip2 = targetShip;
 		Route route = s.route;
-		Combat? c = route as Combat;
-		if (c == null)
-		{
-			return new List<CardAction>();
-		}
-		if (movingShip.Get(Status.engineStall) > 0)
+        if (route is not Combat c)
+        {
+            return [];
+        }
+        if (movingShip.Get(Status.engineStall) > 0)
 		{
 			Audio.Play(Event.Status_PowerDown);
 			movingShip.Add(Status.engineStall, -1);
 			movingShip.shake += 1.0;
-			return new List<CardAction>();
+			return [];
 		}
 		StuffBase? value;
 		var cutoff = rightEdge ? (targetShip.parts.Count - maxLocalXFromEdge - 1) : maxLocalXFromEdge;
@@ -43,6 +45,15 @@ public class AIUtils {
 			})
 			where pair.part.type != PType.empty && (!rightEdge && pair.x <= cutoff || rightEdge && pair.x >= cutoff)
 			select pair).ToList();
+		if (list.Count == 0) list = (from pair in targetShip2.parts.Select((Part part, int x) => new
+			{
+				part = part,
+				x = x,
+				drone = c.stuff.TryGetValue(x + targetShip2.x, out value) ? value : null
+			})
+			where pair.part.type != PType.empty
+			select pair).ToList();
+			
 		var list2 = list.Where(pair =>
 		{
 			if (pair.drone == null)
@@ -54,6 +65,10 @@ public class AIUtils {
 				return false;
 			}
 			if (pair.drone is AttackDrone && pair.drone.targetPlayer)
+			{
+				return false;
+			}
+			if (pair.drone is DualDrone && avoidDualDrones)
 			{
 				return false;
 			}
@@ -83,10 +98,11 @@ public class AIUtils {
 				list = list4;
 			}
 		}
-		var anon = list.Random(s.rngAi);
+
 		Part? part = movingShip.parts.Find(part => part.key == key);
-		int alignPartLocalX = part != null ? movingShip.parts.IndexOf(part) : 0;
-		int num = targetShip2.x + anon.x - (movingShip.x + alignPartLocalX);
+		int index = part != null ? movingShip.parts.IndexOf(part) : 0;
+		var anon = list.Random(s.rngAi);
+		int num = targetShip2.x + anon.x - (movingShip.x + index);
 		if (Math.Abs(num) > maxMove)
 		{
 			num = maxMove * Math.Sign(num);
