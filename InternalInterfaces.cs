@@ -59,7 +59,7 @@ internal interface IRegisterableSettingsArtifact
 			Meta = new()
 			{
 				owner = Deck.colorless,
-				pools = [],
+				pools = [ArtifactPool.Unreleased],
 				unremovable = true
 			},
 			Sprite = sprite,

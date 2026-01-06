@@ -1,16 +1,13 @@
 {
     "EntryPointAssembly": "MoreDifficulties.dll",
     "UniqueName": "TheJazMaster.MoreDifficulties",
-    "Version": "2.0.0",
+    "Version": "{{ModVersion}}",
     "RequiredApiVersion": "0.1.0",
+    "LoadPhase": "AfterGameAssembly",
     "Dependencies": [
         {
             "UniqueName": "Nickel.Essentials",
             "Version": "1.3.0"
-        },
-        {
-            "UniqueName": "Shockah.CustomRunOptions",
-            "IsRequired": false
         }
     ],
     "MethodsToStopInlining": [
@@ -19,11 +16,11 @@
         { "TypeName": "State", "MethodName": "GetHarderBosses" }
     ],
     "UpdateChecks": {
-            "NexusMods": {
-                "ID": 15
-            },
-            "GitHub": {
-                "Repository": "TheJazMaster/MoreDifficulties"
-            }
+        "NexusMods": {
+            "ID": 15
+        },
+        "GitHub": {
+            "Repository": "TheJazMaster/MoreDifficulties"
         }
+    }
 }

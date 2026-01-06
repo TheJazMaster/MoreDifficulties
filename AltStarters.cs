@@ -41,9 +41,9 @@ internal class AltStarters
 	{
 		if (altStarters.ContainsKey(deck))
 		{
-			ModEntry.Instance.Logger!.LogWarning("Deck {Name} already has registered alternative starters.", new { Name = deck.Key() });
+			ModEntry.Instance.Logger!.LogWarning($"Deck {deck.Key()} already has registered alternative starters.");
 		}
-		altStarters.Add(deck, starterDeck);
+        altStarters.Add(deck, starterDeck);
 	}
 
 	internal static Dictionary<Deck, StarterDeck> altStarters = new() {
